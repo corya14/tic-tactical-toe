@@ -5,13 +5,10 @@ Tic Tactical Toe. Grid-based game with Django.
 TODO. Should probably release as docker.
 
 # Run Instructions
-In one terminal instance:
-`npm run start`
+Make sure dependencies are installed:
+`pip install -r requirements.txt`
 
-In another terminal instance:
-`python manage.py runsslserver localhost:8000`
-
-To use self-signed keys.
+To start the Django server using self-signed keys:
 `python manage.py runsslserver --certificate /path/to/certificate.crt --key /path/to/key.key localhost:8000`
 
 ## Generating Self-Signed Certs
