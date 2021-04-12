@@ -25,3 +25,4 @@ openssl req -x509 -out localhost.crt -keyout localhost.key \
 
 # Credits
 https://learndjango.com/tutorials/
+https://github.com/teddziuba/django-sslserver
