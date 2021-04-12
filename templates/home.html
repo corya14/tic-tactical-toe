@@ -3,12 +3,18 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
+<h1>Tic Tactical Toe</h1>
 {% if user.is_authenticated %}
   Hi {{ user.username }}!
   <p><a href="{% url 'logout' %}">Log Out</a></p>
   <p><a href="{% url 'password_reset' %}">Reset Password</a></p>
 {% else %}
   <p>You are not logged in</p>
-  <a href="{% url 'login' %}">Log In</a>
+  <li>
+    <a href="{% url 'signup' %}">Sign up</a>
+  </li>
+  <li>
+    <a href="{% url 'login' %}">Log In</a><br />
+  </li>
 {% endif %}
 {% endblock %}
