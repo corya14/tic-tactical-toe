@@ -5,7 +5,10 @@ Tic Tactical Toe. Grid-based game with Django.
 TODO. Should probably release as docker.
 
 # Run Instructions
-Make sure dependencies are installed:
+Recommended to create a python virtual environment with:
+`python3 -m venv ttt`
+
+Activate the venv and install dependencies:
 `pip install -r requirements.txt`
 
 To start the Django server using self-signed keys:
