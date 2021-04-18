@@ -11,8 +11,8 @@ Recommended to create a python virtual environment with:
 Activate the venv and install dependencies:
 `pip install -r requirements.txt`
 
-To start the Django server using self-signed keys:
-`python manage.py runsslserver --certificate /path/to/certificate.crt --key /path/to/key.key localhost:8000`
+To start the Django server:
+`python manage.py runserver`
 
 ## Generating Self-Signed Certs
 
