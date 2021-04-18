@@ -45,20 +45,24 @@
    <div id="player1">Player 1</div>
    <input id="game-message-input" type="text" size="20"><br>
    <input id="game-message-submit" type="button" value="Submit Order">
+   <br>
+   <textarea id="game-log" cols="20" rows="20"></textarea><br>
     {{ room_name|json_script:"room-name" }}
     <script>
         const roomName = JSON.parse(document.getElementById('room-name').textContent);
 
         const gameSocket = new WebSocket(
-            'ws://'
+            'wss://'
             + window.location.host
-            + '/ws/game/'
+            + '/game/'
             + roomName
             + '/'
         );
 
         gameSocket.onmessage = function(e) {
             const data = JSON.parse(e.data);
+            var x = document.getElementById("game-board").getElementsByTagName("td");
+            x[0].style.backgroundColor = "yellow"
             document.querySelector('#game-log').value += (data.message + '\n');
         };
 
