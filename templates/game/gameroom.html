@@ -52,7 +52,7 @@
         const roomName = JSON.parse(document.getElementById('room-name').textContent);
 
         const gameSocket = new WebSocket(
-            'wss://'
+            'ws://'
             + window.location.host
             + '/game/'
             + roomName
