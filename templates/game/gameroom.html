@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Game Room{% endblock %}
+
+{% block content %}
+
+   <div id="player2">Player 2</div>
+   <table id="game-board">
+      <tr id="row-1">
+         <td id="1a">1a</td>
+         <td id="1b">1b</td>
+         <td id="1c" bgcolor="red">1c</td>
+         <td id="1d">1d</td>
+         <td id="1e">1e</td>
+      </tr>
+      <tr id="row-2">
+         <td id="2a">2a</td>
+         <td id="2b">2b</td>
+         <td id="2c">2c</td>
+         <td id="2d">2d</td>
+         <td id="2e">2e</td>
+      </tr>
+      <tr id="row-3">
+         <td id="3a">3a</td>
+         <td id="3b">3b</td>
+         <td id="3c">3c</td>
+         <td id="3d">3d</td>
+         <td id="3e">3e</td>
+      </tr>
+      <tr id="row-4">
+         <td id="4a">4a</td>
+         <td id="4b">4b</td>
+         <td id="4c">4c</td>
+         <td id="4d">4d</td>
+         <td id="4e">4e</td>
+      </tr>
+      <tr id="row-5">
+         <td id="5a">5a</td>
+         <td id="5b">5b</td>
+         <td id="5c" bgcolor="cyan">5c</td>
+         <td id="5d">5d</td>
+         <td id="5e">5e</td>
+      </tr>
+   </table>
+   <div id="player1">Player 1</div>
+   <input id="game-message-input" type="text" size="20"><br>
+   <input id="game-message-submit" type="button" value="Submit Order">
+    {{ room_name|json_script:"room-name" }}
+    <script>
+        const roomName = JSON.parse(document.getElementById('room-name').textContent);
+
+        const gameSocket = new WebSocket(
+            'ws://'
+            + window.location.host
+            + '/ws/game/'
+            + roomName
+            + '/'
+        );
+
+        gameSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            document.querySelector('#game-log').value += (data.message + '\n');
+        };
+
+        gameSocket.onclose = function(e) {
+            console.error('Game socket closed unexpectedly');
+        };
+
+        document.querySelector('#game-message-input').focus();
+        document.querySelector('#game-message-input').onkeyup = function(e) {
+            if (e.keyCode === 13) {  // enter, return
+                document.querySelector('#game-message-submit').click();
+            }
+        };
+
+        document.querySelector('#game-message-submit').onclick = function(e) {
+            const messageInputDom = document.querySelector('#game-message-input');
+            const message = messageInputDom.value;
+            gameSocket.send(JSON.stringify({
+                'message': message
+            }));
+            messageInputDom.value = '';
+        };
+    </script>
+{% endblock %}
