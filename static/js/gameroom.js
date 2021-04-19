@@ -1,11 +1,11 @@
 (function() {
 
-const roomName = JSON.parse(document.getElementById('room-name').textContent);
+const gameName = JSON.parse(document.getElementById('game-name').textContent);
 const requestingUser = JSON.parse(document.getElementById('requesting_user').textContent);
 
 var ws_scheme = window.location.protocol == "https:" ? "wss://" : "ws://";
 const userSocket = new WebSocket(
-   `${ws_scheme}${window.location.host}/user/${requestingUser}/`
+   `${ws_scheme}${window.location.host}/${gameName}/${requestingUser}/`
 );
 
 userSocket.onmessage = function(e) {
@@ -30,10 +30,9 @@ document.querySelector('#game-message-submit').onclick = function(e) {
    const dstSquare = document.querySelector('#dest-square').value
    const move = `(${numTacks})(${srcSquare},${dstSquare})`;
    userSocket.send(JSON.stringify({
-      'game': roomName,
+      'game': gameName,
       'move': move
    }));
-   messageInputDom.value = '';
 };
 
 })();

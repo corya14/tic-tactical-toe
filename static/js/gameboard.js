@@ -1,6 +1,6 @@
 (function() {
 
-  const roomName = JSON.parse(document.getElementById('room-name').textContent);
+  const gameName = JSON.parse(document.getElementById('game-name').textContent);
   const requestingUser = JSON.parse(document.getElementById('requesting_user').textContent);
 
 
@@ -16,8 +16,9 @@
 
     React.useEffect(() => {
       var ws_scheme = window.location.protocol == "https:" ? "wss://" : "ws://";
+      console.log( `${ws_scheme}${window.location.host}/${gameName}/${requestingUser}/` )
       webSocket.current = new WebSocket(
-        `${ws_scheme}${window.location.host}/user/${requestingUser}/`
+        `${ws_scheme}${window.location.host}/${gameName}/${requestingUser}/`
       );
 
         webSocket.current.onmessage = function(e) {
