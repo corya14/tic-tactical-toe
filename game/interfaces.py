@@ -1,3 +1,17 @@
+# Encapculates an update to the back end
+class BackEndUpdate():
+   def __init__(self, user, game, move):
+      self._user = user
+      self._game = game
+      self._move = move
+   def user(self):
+      return self._user
+   def game(self):
+      return self._game
+   def move(self):
+      return self._move
+   def __str__(self):
+      return "BackEndUpdate{{USER[{}]GAME[{}]MOVE[{}]}}".format(self._user, self._game, self._move)
 
 # Encapsulates an update to the front end
 class FrontEndUpdate():
@@ -46,7 +60,7 @@ class GameModelInterface():
       pass
 
    @staticmethod
-   def give_move( user, game, move_str ) -> FrontEndUpdate:
+   def give_update( backend_update ) -> FrontEndUpdate:
       """
       Accept move_str from user for given game (str name of game)
       Should check:
@@ -59,4 +73,4 @@ class GameModelInterface():
       Finally:
          yield FrontEndUpdate with applicable status
       """
-      pass
+      print( str(backend_update) )
