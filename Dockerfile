@@ -25,6 +25,6 @@ RUN pip3 install -r requirements.txt
 RUN python3 manage.py makemigrations
 RUN python3 manage.py migrate
 
-ENV DJANGO_SETTINGS_MODULE=ticTacticalToe.settings
+ENV DJANGO_SETTINGS_MODULE=ticTacticalToe.production
 
-CMD ["daphne", "-e", "ssl:443:privateKey=localhost-TEST.key:certKey=localhost-TEST.crt ticTacticalToe.asgi:application"]
+CMD ["daphne", "-e", "ssl:443:privateKey=localhost-TEST.key:certKey=localhost-TEST.crt", "ticTacticalToe.asgi:application"]
