@@ -6,6 +6,7 @@ from game.models import MockGame
 
 class UserSocketConsumer(WebsocketConsumer):
     def connect(self):
+        self.user = self.scope["user"]
         self.accept()
         self.send( json.dumps( MockGame.gen_initial_game_dict() ) )
 
@@ -13,13 +14,15 @@ class UserSocketConsumer(WebsocketConsumer):
         pass
 
     def receive(self, text_data):
-        text_data_json = json.loads(text_data)
-        message = text_data_json['message']
+        if self.user.is_authenticated:
+            text_data_json = json.loads(text_data)
+            message = "USER[{}]GAME[{}]MOVE[{}]".format(self.user.username, text_data_json['game'], text_data_json['move'])
+            print(message)
 
-        game_dict = MockGame.gen_dummy_dict()
+            game_dict = MockGame.gen_dummy_dict()
 
-        self.send( text_data=json.dumps( game_dict ) )
+            self.send( text_data=json.dumps( game_dict ) )
 
-        # self.send(text_data=json.dumps({
-        #     'message': message
-        # }))
+            # self.send(text_data=json.dumps({
+            #     'message': message
+            # }))

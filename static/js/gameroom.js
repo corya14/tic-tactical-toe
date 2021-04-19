@@ -25,10 +25,13 @@ document.querySelector('#game-message-input').onkeyup = function(e) {
 };
 
 document.querySelector('#game-message-submit').onclick = function(e) {
-   const messageInputDom = document.querySelector('#game-message-input');
-   const message = messageInputDom.value;
+   const numTacks = document.querySelector('#game-message-input').value;
+   const srcSquare = document.querySelector('#origin-square').value
+   const dstSquare = document.querySelector('#dest-square').value
+   const move = `(${numTacks})(${srcSquare},${dstSquare})`;
    userSocket.send(JSON.stringify({
-      'message': message
+      'game': roomName,
+      'move': move
    }));
    messageInputDom.value = '';
 };
