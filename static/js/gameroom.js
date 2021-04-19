@@ -2,8 +2,9 @@
 
 const roomName = JSON.parse(document.getElementById('room-name').textContent);
 
+var ws_scheme = window.location.protocol == "https:" ? "wss://" : "ws://";
 const gameSocket = new WebSocket(
-   `ws://${window.location.host}/game/${roomName}/`
+   `${ws_scheme}${window.location.host}/game/${roomName}/`
 );
 
 gameSocket.onmessage = function(e) {
