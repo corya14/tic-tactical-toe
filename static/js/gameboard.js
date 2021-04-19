@@ -1,6 +1,7 @@
 (function() {
 
   const roomName = JSON.parse(document.getElementById('room-name').textContent);
+  const requestingUser = JSON.parse(document.getElementById('requesting_user').textContent);
 
 
   // "..." deconstructs to create a copy of the array
@@ -16,12 +17,11 @@
     React.useEffect(() => {
       var ws_scheme = window.location.protocol == "https:" ? "wss://" : "ws://";
       webSocket.current = new WebSocket(
-        `${ws_scheme}${window.location.host}/game/${roomName}/`
+        `${ws_scheme}${window.location.host}/user/${requestingUser}/`
       );
 
         webSocket.current.onmessage = function(e) {
           const data = JSON.parse(e.data);
-          console.log('>>>> am I getting data', data)
           setGameboard(Object.keys(data.gameboard).sort().map(item => data.gameboard[item]));
         };
 
@@ -50,11 +50,9 @@
       <th id="0e"><strong>e</strong></th>
     </tr>
     {rows.map((row, index) => {
-      console.log('>>> row', row);
       return (<tr key={index} id={`row-${index + 1}`}>
         <td><strong>{index + 1}</strong></td>
         {row.map(square => {
-          console.log('>>> square', square)
         return <td key={square.id} id={square.id} bgcolor={square.color}>{square.value}</td>})}
       </tr>);
     })}

@@ -119,6 +119,7 @@
    <input id="game-message-submit" type="button" value="Submit Order">
    <br>
    <textarea id="game-log" cols="20" rows="20"></textarea><br>
+   {{ requesting_user|json_script:"requesting_user" }}
    {{ room_name|json_script:"room-name" }}
 
    {% load static %}
