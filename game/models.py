@@ -4,12 +4,12 @@ from django.contrib.auth.models import User
 # Create your models here.
 
 class Game(models.Model):
-    winner = models.ForeignKey(
-        User, related_name='winner', null=True, blank=True)
-    creator = models.ForeignKey(User, related_name='creator')
-    opponent = models.ForeignKey(
-        User, related_name='opponent', null=True, blank=True)
-    current_turn = models.ForeignKey(User, related_name='current_turn')
+    winner = models.ForeignKey( User, on_delete=models.CASCADE,
+        related_name='winner', null=True, blank=True)
+    creator = models.ForeignKey( User, on_delete=models.CASCADE, related_name='creator')
+    opponent = models.ForeignKey( User, on_delete=models.CASCADE,
+        related_name='opponent', null=True, blank=True)
+    current_turn = models.ForeignKey( User, on_delete=models.CASCADE, related_name='current_turn')
 
     # dates
     completed = models.DateTimeField(null=True, blank=True)
@@ -151,8 +151,8 @@ class GameSquare(models.Model):
         ('RedOccupied', 'RedOccupied'),
         ('BlueOccupied', 'BlueOccupied')
     )
-    game = models.ForeignKey(Game)
-    owner = models.ForeignKey(User, null=True, blank=True)
+    game = models.ForeignKey( Game, on_delete=models.CASCADE )
+    owner = models.ForeignKey( User, on_delete=models.CASCADE, null=True, blank=True)
     status = models.CharField(choices=STATUS_TYPES,
                               max_length=25,
                               default='Free')
@@ -225,9 +225,9 @@ class GameSquare(models.Model):
 
 
 class GameLog(models.Model):
-    game = models.ForeignKey(Game)
+    game = models.ForeignKey( Game, on_delete=models.CASCADE )
     text = models.CharField(max_length=300)
-    player = models.ForeignKey(User, null=True, blank=True)
+    player = models.ForeignKey( User, on_delete=models.CASCADE, null=True, blank=True)
 
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
