@@ -3,6 +3,66 @@ from django.contrib.auth.models import User
 
 # Create your models here.
 
+cols = ['a', 'b', 'c', 'd', 'e']
+
+# TODO: Replace me with actual model
+class MockGame():
+
+    @staticmethod
+    def GridSquare( id, color='white', value=0 ):
+        d = {}
+        d['id'] = id
+        d['color'] = color
+        d['value'] = value
+        return d
+
+    @staticmethod
+    def get_base_game_dict():
+        game_dict = {}
+        game_dict["gameboard"] = {}
+
+        for i in range(1,6):
+            for col in cols:
+                id = str(i) + col
+                game_dict["gameboard"][id] = MockGame.GridSquare( id )
+        return game_dict
+
+    @staticmethod
+    def gen_initial_game_dict():
+        game_dict = MockGame.get_base_game_dict()
+
+        game_dict["gameboard"]["1c"]["color"]='red'
+        game_dict["gameboard"]["1c"]["value"]=2
+        game_dict["gameboard"]["5c"]["color"]='cyan'
+        game_dict["gameboard"]["5c"]["value"]=1
+
+        game_dict[ "status" ] = "Accepted"
+        return game_dict
+
+    @staticmethod
+    def gen_dummy_dict():
+        game_dict = MockGame.get_base_game_dict()
+
+        game_dict["gameboard"]["1b"]["color"]='red'
+        game_dict["gameboard"]["1b"]["value"]=1
+        game_dict["gameboard"]["1c"]["color"]='red'
+        game_dict["gameboard"]["1c"]["value"]=2
+        game_dict["gameboard"]["1d"]["color"]='red'
+        game_dict["gameboard"]["1d"]["value"]=3
+
+        game_dict["gameboard"]["4c"]["color"]='cyan'
+        game_dict["gameboard"]["4c"]["value"]=4
+        game_dict["gameboard"]["5b"]["color"]='cyan'
+        game_dict["gameboard"]["5b"]["value"]=3
+        game_dict["gameboard"]["5c"]["color"]='cyan'
+        game_dict["gameboard"]["5c"]["value"]=2
+        game_dict["gameboard"]["5d"]["color"]='cyan'
+        game_dict["gameboard"]["5d"]["value"]=1
+
+        game_dict[ "status" ] = "Accepted"
+
+        return game_dict
+
 class Game(models.Model):
     winner = models.ForeignKey( User, on_delete=models.CASCADE,
         related_name='winner', null=True, blank=True)
