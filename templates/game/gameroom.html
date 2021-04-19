@@ -7,83 +7,153 @@
    <div id="player2">Player 2</div>
    <table id="game-board">
       <tr id="row-1">
-         <td id="1a">1a</td>
-         <td id="1b">1b</td>
-         <td id="1c" bgcolor="red">1c</td>
-         <td id="1d">1d</td>
-         <td id="1e">1e</td>
+         <td id="0-header"><strong>#</strong></td>
+         <td id="0a"><strong>a</strong></td>
+         <td id="0b"><strong>b</strong></td>
+         <td id="0c"><strong>c</strong></td>
+         <td id="0d"><strong>d</strong></td>
+         <td id="0e"><strong>e</strong></td>
+      </tr>
+      <tr id="row-1">
+         <td id="1-header"><strong>1</strong></td>
+         <td id="1a">0</td>
+         <td id="1b">0</td>
+         <td id="1c" bgcolor="red">0</td>
+         <td id="1d">0</td>
+         <td id="1e">0</td>
       </tr>
       <tr id="row-2">
-         <td id="2a">2a</td>
-         <td id="2b">2b</td>
-         <td id="2c">2c</td>
-         <td id="2d">2d</td>
-         <td id="2e">2e</td>
+         <td id="2-header"><strong>2</strong></td>
+         <td id="2a">0</td>
+         <td id="2b">0</td>
+         <td id="2c">0</td>
+         <td id="2d">0</td>
+         <td id="2e">0</td>
       </tr>
       <tr id="row-3">
-         <td id="3a">3a</td>
-         <td id="3b">3b</td>
-         <td id="3c">3c</td>
-         <td id="3d">3d</td>
-         <td id="3e">3e</td>
+         <td id="3-header"><strong>3</strong></td>
+         <td id="3a">0</td>
+         <td id="3b">0</td>
+         <td id="3c">0</td>
+         <td id="3d">0</td>
+         <td id="3e">0</td>
       </tr>
       <tr id="row-4">
-         <td id="4a">4a</td>
-         <td id="4b">4b</td>
-         <td id="4c">4c</td>
-         <td id="4d">4d</td>
-         <td id="4e">4e</td>
+         <td id="4-header"><strong>4</strong></td>
+         <td id="4a">0</td>
+         <td id="4b">0</td>
+         <td id="4c">0</td>
+         <td id="4d">0</td>
+         <td id="4e">0</td>
       </tr>
       <tr id="row-5">
-         <td id="5a">5a</td>
-         <td id="5b">5b</td>
-         <td id="5c" bgcolor="cyan">5c</td>
-         <td id="5d">5d</td>
-         <td id="5e">5e</td>
+         <td id="5-header"><strong>5</strong></td>
+         <td id="5a">0</td>
+         <td id="5b">0</td>
+         <td id="5c" bgcolor="cyan">0</td>
+         <td id="5d">0</td>
+         <td id="5e">0</td>
       </tr>
    </table>
    <div id="player1">Player 1</div>
-   <input id="game-message-input" type="text" size="20"><br>
+   <label for="origin-square">Origin square:</label>
+   <select id="origin-square" name="origin-square" size="1">
+      <option value="a1">a1</option>
+      <option value="a2">a2</option>
+      <option value="a3">a3</option>
+      <option value="a4">a4</option>
+      <option value="a5">a5</option>
+      <option value="b1">b1</option>
+      <option value="b2">b2</option>
+      <option value="b3">b3</option>
+      <option value="b4">b4</option>
+      <option value="b5">b5</option>
+      <option value="c1">c1</option>
+      <option value="c2">c2</option>
+      <option value="c3">c3</option>
+      <option value="c4">c4</option>
+      <option value="c5">c5</option>
+      <option value="d1">d1</option>
+      <option value="d2">d2</option>
+      <option value="d3">d3</option>
+      <option value="d4">d4</option>
+      <option value="d5">d5</option>
+      <option value="e1">e1</option>
+      <option value="e2">e2</option>
+      <option value="e3">e3</option>
+      <option value="e4">e4</option>
+      <option value="e5">e5</option>
+   </select><br />
+   <label for="dest-square">Dest square:</label>
+   <select id="dest-square" name="dest-square" size="1">
+      <option value="a1">a1</option>
+      <option value="a2">a2</option>
+      <option value="a3">a3</option>
+      <option value="a4">a4</option>
+      <option value="a5">a5</option>
+      <option value="b1">b1</option>
+      <option value="b2">b2</option>
+      <option value="b3">b3</option>
+      <option value="b4">b4</option>
+      <option value="b5">b5</option>
+      <option value="c1">c1</option>
+      <option value="c2">c2</option>
+      <option value="c3">c3</option>
+      <option value="c4">c4</option>
+      <option value="c5">c5</option>
+      <option value="d1">d1</option>
+      <option value="d2">d2</option>
+      <option value="d3">d3</option>
+      <option value="d4">d4</option>
+      <option value="d5">d5</option>
+      <option value="e1">e1</option>
+      <option value="e2">e2</option>
+      <option value="e3">e3</option>
+      <option value="e4">e4</option>
+      <option value="e5">e5</option>
+   </select><br />
+   <label for="game-message-input"># of tacks:</label>
+   <input id="game-message-input" type="text" size="20"><br />
    <input id="game-message-submit" type="button" value="Submit Order">
    <br>
    <textarea id="game-log" cols="20" rows="20"></textarea><br>
-    {{ room_name|json_script:"room-name" }}
-    <script>
-        const roomName = JSON.parse(document.getElementById('room-name').textContent);
+   {{ room_name|json_script:"room-name" }}
+   <script>
+      const roomName = JSON.parse(document.getElementById('room-name').textContent);
 
-        const gameSocket = new WebSocket(
-            'ws://'
-            + window.location.host
-            + '/game/'
-            + roomName
-            + '/'
-        );
+      const gameSocket = new WebSocket(
+         'ws://'
+         + window.location.host
+         + '/game/'
+         + roomName
+         + '/'
+      );
 
-        gameSocket.onmessage = function(e) {
-            const data = JSON.parse(e.data);
-            var x = document.getElementById("game-board").getElementsByTagName("td");
-            x[0].style.backgroundColor = "yellow"
-            document.querySelector('#game-log').value += (data.message + '\n');
-        };
+      gameSocket.onmessage = function(e) {
+         const data = JSON.parse(e.data);
+         var x = document.getElementById("game-board").getElementsByTagName("td");
+         x[0].style.backgroundColor = "yellow"
+         document.querySelector('#game-log').value += (data.message + '\n');
+      };
 
-        gameSocket.onclose = function(e) {
-            console.error('Game socket closed unexpectedly');
-        };
+      gameSocket.onclose = function(e) {
+         console.error('Game socket closed unexpectedly');
+      };
 
-        document.querySelector('#game-message-input').focus();
-        document.querySelector('#game-message-input').onkeyup = function(e) {
-            if (e.keyCode === 13) {  // enter, return
-                document.querySelector('#game-message-submit').click();
-            }
-        };
+      document.querySelector('#game-message-input').focus();
+      document.querySelector('#game-message-input').onkeyup = function(e) {
+         if (e.keyCode === 13) {  // enter, return
+            document.querySelector('#game-message-submit').click();
+         }
+      };
 
-        document.querySelector('#game-message-submit').onclick = function(e) {
-            const messageInputDom = document.querySelector('#game-message-input');
-            const message = messageInputDom.value;
-            gameSocket.send(JSON.stringify({
-                'message': message
-            }));
-            messageInputDom.value = '';
-        };
-    </script>
+      document.querySelector('#game-message-submit').onclick = function(e) {
+         const messageInputDom = document.querySelector('#game-message-input');
+         const message = messageInputDom.value;
+         gameSocket.send(JSON.stringify({
+            'message': message
+         }));
+         messageInputDom.value = '';
+      };
+   </script>
 {% endblock %}
