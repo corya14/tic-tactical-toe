@@ -28,6 +28,7 @@ This requires the files `localhost-TEST.crt` and `localhost-TEST.key` to exist l
 `docker build --tag ttt:latest .`
 `docker run -it -d --name ttt -p 4443:443 ttt`
 
+Navigate to `https://localhost:4443`. Recommended browser: Chrome (accepts self signed root certs)
 
 # Credits
  * https://learndjango.com/tutorials/
