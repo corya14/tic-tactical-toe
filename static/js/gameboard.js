@@ -16,7 +16,7 @@
 
     React.useEffect(() => {
       var ws_scheme = window.location.protocol == "https:" ? "wss://" : "ws://";
-      console.log( `${ws_scheme}${window.location.host}/${gameName}/${requestingUser}/` )
+      console.log( `BOARD:${ws_scheme}${window.location.host}/${gameName}/${requestingUser}/` )
       webSocket.current = new WebSocket(
         `${ws_scheme}${window.location.host}/${gameName}/${requestingUser}/`
       );

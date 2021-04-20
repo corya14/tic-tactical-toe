@@ -1,7 +1,7 @@
-from django.urls import re_path
+from django.conf.urls import url
 
 from . import consumers
 
 websocket_urlpatterns = [
-    re_path(r'(?P<game_name>\w+)/[A-Za-z]{1,150}/$', consumers.UserSocketConsumer.as_asgi()),
+    url(r'(?P<game_name>\w+)/[A-Za-z0-9]{1,150}/$', consumers.UserSocketConsumer.as_asgi()),
 ]
