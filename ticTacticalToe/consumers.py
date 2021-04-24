@@ -4,22 +4,57 @@ from game.models import MockGame
 from game.interfaces import BackEndUpdate
 from game.interfaces import GameModelInterface
 from asgiref.sync import async_to_sync
-#from channels.generic.websocket import JsonWebsocketConsumer
-#from channels.generic.websocket import AsyncWebsocketConsumer
 
-class UserSocketConsumer(WebsocketConsumer):
+class UserGameBoardSocketConsumer(WebsocketConsumer):
+    """
+    Socket consumer for updating the gameboard ONLY
+    Client socket onReceive() accepts gameboard JSON portion of front end updates
+    Ignores any client->server comms [client socket send()] on this socket
+    """
     def connect(self):
         self.user = self.scope["user"]
-        if self.user.is_authenticated:
-            self.game_name = self.scope['url_route']['kwargs']['game_name']
+        self.game_name = self.scope['url_route']['kwargs']['game_name']
+        user_has_game_auth = GameModelInterface.user_is_authenticated_to_game( self.user, self.game_name )
+        if self.user.is_authenticated and user_has_game_auth:
             async_to_sync(self.channel_layer.group_add)(self.game_name, self.channel_name)
             self.accept()
+            # TODO: Ask models to init game or add player 2 here
             self.send( json.dumps( MockGame.gen_initial_game_dict() ) )
+        else:
+            return # User isn't authenticated OR not authenticated to game
 
     def disconnect(self, close_code):
         if self.user.is_authenticated:
             async_to_sync(self.channel_layer.group_discard)(self.game_name, self.channel_name)
 
+    def receive(self, text_data):
+        """Ignore any client->server comms for this socket"""
+        return
+
+    def front_end_update(self, event):
+        self.send( text_data=event["text"] )
+
+class UserGameRoomSocketConsumer(WebsocketConsumer):
+    """
+    Socket consumer for receiving user input and returning status
+    Client->server [client socket send()] comms on this socket are for user input
+    Client socket onRecieve() accepts and displays status portion of JSON e.g. "Player 2 turn"
+    """
+    def connect(self):
+        self.user = self.scope["user"]
+        self.game_name = self.scope['url_route']['kwargs']['game_name']
+        user_has_game_auth = GameModelInterface.user_is_authenticated_to_game( self.user, self.game_name )
+        if self.user.is_authenticated and user_has_game_auth:
+            async_to_sync(self.channel_layer.group_add)(self.game_name, self.channel_name)
+            self.accept()
+        else:
+            return # User isn't authenticated OR not authenticated to game
+
+    def disconnect(self, close_code):
+        if self.user.is_authenticated:
+            async_to_sync(self.channel_layer.group_discard)(self.game_name, self.channel_name)
+
+    # Reception of user input from user game room socket
     def receive(self, text_data):
         if self.user.is_authenticated:
             text_data_json = json.loads(text_data)
@@ -38,5 +73,5 @@ class UserSocketConsumer(WebsocketConsumer):
                 },
             )
 
-    def gameboard_update(self, event):
+    def front_end_update(self, event):
         self.send( text_data=event["text"] )
