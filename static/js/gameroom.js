@@ -4,9 +4,9 @@ const gameName = JSON.parse(document.getElementById('game-name').textContent);
 const requestingUser = JSON.parse(document.getElementById('requesting_user').textContent);
 
 var ws_scheme = window.location.protocol == "https:" ? "wss://" : "ws://";
-console.log( `GAMEROOM:${ws_scheme}${window.location.host}/${gameName}/${requestingUser}/` )
+console.log( `${ws_scheme}${window.location.host}/${gameName}/${requestingUser}/room` )
 const userSocket = new WebSocket(
-   `${ws_scheme}${window.location.host}/${gameName}/${requestingUser}/`
+   `${ws_scheme}${window.location.host}/${gameName}/${requestingUser}/room`
 );
 
 userSocket.onmessage = function(e) {
