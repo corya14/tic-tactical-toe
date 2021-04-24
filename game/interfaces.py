@@ -1,64 +1,6 @@
+import json
+
 # Encapculates an update to the back end
-
-# TODO: Replace me with actual model
-
-cols = ['a', 'b', 'c', 'd', 'e']
-
-class MockGame():
-    @staticmethod
-    def GridSquare( id, color='white', value=0 ):
-        d = {}
-        d['id'] = id
-        d['color'] = color
-        d['value'] = value
-        return d
-
-    @staticmethod
-    def get_base_game_dict():
-        game_dict = {}
-        game_dict["gameboard"] = {}
-
-        for i in range(1,6):
-            for col in cols:
-                id = str(i) + col
-                game_dict["gameboard"][id] = MockGame.GridSquare( id )
-        return game_dict
-
-    @staticmethod
-    def gen_initial_game_dict():
-        game_dict = MockGame.get_base_game_dict()
-
-        game_dict["gameboard"]["1c"]["color"]='red'
-        game_dict["gameboard"]["1c"]["value"]=2
-        game_dict["gameboard"]["5c"]["color"]='cyan'
-        game_dict["gameboard"]["5c"]["value"]=1
-
-        game_dict[ "status" ] = "Accepted"
-        return game_dict
-
-    @staticmethod
-    def gen_dummy_dict():
-        game_dict = MockGame.get_base_game_dict()
-
-        game_dict["gameboard"]["1b"]["color"]='red'
-        game_dict["gameboard"]["1b"]["value"]=1
-        game_dict["gameboard"]["1c"]["color"]='red'
-        game_dict["gameboard"]["1c"]["value"]=2
-        game_dict["gameboard"]["1d"]["color"]='red'
-        game_dict["gameboard"]["1d"]["value"]=3
-
-        game_dict["gameboard"]["4c"]["color"]='cyan'
-        game_dict["gameboard"]["4c"]["value"]=4
-        game_dict["gameboard"]["5b"]["color"]='cyan'
-        game_dict["gameboard"]["5b"]["value"]=3
-        game_dict["gameboard"]["5c"]["color"]='cyan'
-        game_dict["gameboard"]["5c"]["value"]=2
-        game_dict["gameboard"]["5d"]["color"]='cyan'
-        game_dict["gameboard"]["5d"]["value"]=1
-
-        game_dict[ "status" ] = "Accepted"
-
-        return game_dict
 
 class BackEndUpdate():
    def __init__(self, user, game, move):
@@ -87,19 +29,24 @@ class FrontEndUpdate():
       return d
 
    def __init__(self):
-      self.game_dict = {}
-      self.game_dict["gameboard"] = {}
-      self.gameboard = game_dict["gameboard"]
-      self.game_dict["status"] = ""
-      self.status = game_dict["status"]
-      self.game_dict["log"] = []
-      self.gamelog = game_dict["log"]
+      self.data_dict = {}
+      self.data_dict["gameboard"] = {}
+      self.gameboard = self.data_dict["gameboard"]
+      self.data_dict["status"] = ""
+      self.status = self.data_dict["status"]
+      self.data_dict["log"] = []
+      self.gamelog = self.data_dict["log"]
       rows = [1, 2, 3, 4, 5]
       cols = ['a', 'b', 'c', 'd', 'e']
       for row in rows:
          for col in cols:
             self.init_square(row, col)
-      return game_dict
+      red_start_sq_id = FrontEndUpdate.get_square_id( 1, 'c' )
+      blue_start_sq_id = FrontEndUpdate.get_square_id( 5, 'c' )
+      red_starter_sq = FrontEndUpdate.square_dict( red_start_sq_id, 'red', 2 )
+      blue_starter_sq = FrontEndUpdate.square_dict( blue_start_sq_id, 'cyan', 1 )
+      self.set_square( 1, 'c', red_starter_sq )
+      self.set_square( 5, 'c', blue_starter_sq )
 
    @staticmethod
    def get_square_id( row, col ):
@@ -109,8 +56,18 @@ class FrontEndUpdate():
       id = FrontEndUpdate.get_square_id( row, col )
       self.gameboard[id] = FrontEndUpdate.square_dict(id)
 
+   def get_square( self, row, col ):
+      return self.gameboard[ self.get_square_id( row, col ) ]
+
    def set_square(self, row, col, square):
-      self.game_dict["gameboard"][FrontEndUpdate.get_square_id(row,col)] = square
+      self.data_dict["gameboard"][FrontEndUpdate.get_square_id(row,col)] = square
+
+   def set_square_values( self, row, col, color='white', value=0 ):
+      self.get_square( row, col )['color'] = color
+      self.get_square( row, col )['value'] = value
+
+   def serialize( self ):
+      return json.dumps( self.data_dict )
 
 
 # Define an object adapter for interactions with game model
@@ -120,6 +77,11 @@ class GameModelInterface():
       """Return true if user is auth'd to game, or game needs a new player"""
       # FIXME
       return True
+
+   @staticmethod
+   def get_current_game_state( user, game_name ) -> FrontEndUpdate:
+      # TODO: Get front end update from model
+      return FrontEndUpdate()
 
    @staticmethod
    def give_update( backend_update ) -> FrontEndUpdate:
@@ -136,6 +98,15 @@ class GameModelInterface():
          yield FrontEndUpdate with applicable status
       """
       print( str(backend_update) )
+      # TODO: replace me with properer front end update
+      update = FrontEndUpdate()
+      update.set_square_values( 1, 'b', 'red', 1 )
+      update.set_square_values( 1, 'd', 'red', 3 )
+      update.set_square_values( 1, 'd', 'red', 3 )
+      update.set_square_values( 4, 'b', 'cyan', 1 )
+      update.set_square_values( 4, 'c', 'cyan', 2 )
+      update.set_square_values( 4, 'd', 'cyan', 3 )
+      return update
 
    @staticmethod
    def get_lobby_games():

@@ -2,7 +2,6 @@ import json
 from channels.generic.websocket import WebsocketConsumer
 from game.interfaces import BackEndUpdate
 from game.interfaces import GameModelInterface
-from game.interfaces import MockGame
 from asgiref.sync import async_to_sync
 
 class UserGameBoardSocketConsumer(WebsocketConsumer):
@@ -18,8 +17,7 @@ class UserGameBoardSocketConsumer(WebsocketConsumer):
         if self.user.is_authenticated and user_has_game_auth:
             async_to_sync(self.channel_layer.group_add)(self.game_name, self.channel_name)
             self.accept()
-            # TODO: Ask models to init game or add player 2 here
-            self.send( json.dumps( MockGame.gen_initial_game_dict() ) )
+            self.send( GameModelInterface.get_current_game_state( self.user, self.game_name ).serialize() )
         else:
             return # User isn't authenticated OR not authenticated to game
 
@@ -61,15 +59,13 @@ class UserGameRoomSocketConsumer(WebsocketConsumer):
             game = text_data_json['game']
             move = text_data_json['move']
             backend_update = BackEndUpdate( self.user.username, game, move )
-            GameModelInterface.give_update( backend_update )
-
-            game_dict = MockGame.gen_dummy_dict()
+            frontend_update = GameModelInterface.give_update( backend_update )
 
             async_to_sync(self.channel_layer.group_send)(
                 self.game_name,
                 {
                     "type": "front_end_update",
-                    "text": json.dumps( game_dict ),
+                    "text": frontend_update.serialize(),
                 },
             )
 
