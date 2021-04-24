@@ -41,12 +41,8 @@ class FrontEndUpdate():
       for row in rows:
          for col in cols:
             self.init_square(row, col)
-      red_start_sq_id = FrontEndUpdate.get_square_id( 1, 'c' )
-      blue_start_sq_id = FrontEndUpdate.get_square_id( 5, 'c' )
-      red_starter_sq = FrontEndUpdate.square_dict( red_start_sq_id, 'red', 2 )
-      blue_starter_sq = FrontEndUpdate.square_dict( blue_start_sq_id, 'cyan', 1 )
-      self.set_square( 1, 'c', red_starter_sq )
-      self.set_square( 5, 'c', blue_starter_sq )
+      self.set_square( 1, 'c', 'red', 2 )
+      self.set_square( 5, 'c', 'cyan', 1 )
 
    @staticmethod
    def get_square_id( row, col ):
@@ -59,11 +55,17 @@ class FrontEndUpdate():
    def get_square( self, row, col ):
       return self.gameboard[ self.get_square_id( row, col ) ]
 
-   def set_square(self, row, col, square):
-      self.data_dict["gameboard"][FrontEndUpdate.get_square_id(row,col)] = square
-
-   def set_square_values( self, row, col, color='white', value=0 ):
+   def set_square(self, row, col, color, value ):
       self.get_square( row, col )['color'] = color
+      self.get_square( row, col )['value'] = value
+
+   def make_square_blue( self, row, col ):
+      self.get_square( row, col )['color'] = 'cyan'
+
+   def make_square_red( self, row, col ):
+      self.get_square( row, col )['color'] = 'red'
+
+   def set_square_value( self, row, col, value ):
       self.get_square( row, col )['value'] = value
 
    def serialize( self ):
@@ -98,14 +100,14 @@ class GameModelInterface():
          yield FrontEndUpdate with applicable status
       """
       print( str(backend_update) )
-      # TODO: replace me with properer front end update
+      # TODO: replace me with proper front end update
       update = FrontEndUpdate()
-      update.set_square_values( 1, 'b', 'red', 1 )
-      update.set_square_values( 1, 'd', 'red', 3 )
-      update.set_square_values( 1, 'd', 'red', 3 )
-      update.set_square_values( 4, 'b', 'cyan', 1 )
-      update.set_square_values( 4, 'c', 'cyan', 2 )
-      update.set_square_values( 4, 'd', 'cyan', 3 )
+      update.set_square( 1, 'b', 'red', 1 )
+      update.set_square( 1, 'd', 'red', 3 )
+      update.set_square( 1, 'd', 'red', 3 )
+      update.set_square( 4, 'b', 'cyan', 1 )
+      update.set_square( 4, 'c', 'cyan', 2 )
+      update.set_square( 4, 'd', 'cyan', 3 )
       return update
 
    @staticmethod
