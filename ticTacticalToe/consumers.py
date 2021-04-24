@@ -1,8 +1,8 @@
 import json
 from channels.generic.websocket import WebsocketConsumer
-from game.models import MockGame
 from game.interfaces import BackEndUpdate
 from game.interfaces import GameModelInterface
+from game.interfaces import MockGame
 from asgiref.sync import async_to_sync
 
 class UserGameBoardSocketConsumer(WebsocketConsumer):
