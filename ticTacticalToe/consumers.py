@@ -68,7 +68,7 @@ class UserGameRoomSocketConsumer(WebsocketConsumer):
             async_to_sync(self.channel_layer.group_send)(
                 self.game_name,
                 {
-                    "type": "gameboard_update",
+                    "type": "front_end_update",
                     "text": json.dumps( game_dict ),
                 },
             )
