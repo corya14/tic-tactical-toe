@@ -75,3 +75,9 @@ class GameModelInterface():
          yield FrontEndUpdate with applicable status
       """
       print( str(backend_update) )
+
+   @staticmethod
+   def get_lobby_games():
+      """ Return list of games that need another player """
+      #TODO: Replace with model query for games in need of another player
+      return [ "game1", "game2", "game3" ]
