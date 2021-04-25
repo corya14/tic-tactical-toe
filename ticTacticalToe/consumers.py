@@ -74,9 +74,11 @@ class UserGameRoomSocketConsumer(WebsocketConsumer):
 
 class UserGameLobbyConsumer(WebsocketConsumer):
     def connect(self):
+        self.user = self.scope["user"]
         if self.user.is_authenticated:
             async_to_sync(self.channel_layer.group_add)('lobby', self.channel_name)
             self.accept()
+            self.send(json.dumps(GameModelInterface.get_lobby_games()))
     def disconnect(self, close_code):
         if self.user.is_authenticated:
             # Remove from lobby group

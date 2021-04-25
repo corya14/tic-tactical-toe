@@ -5,22 +5,15 @@
     <title>Lobby</title>
 </head>
 <body>
-    What game room would you like to enter?<br>
+    <h1>Lobby</h1>
+    <label for="available-games">Available games:</label><br>
+    <textarea id="available-games" cols="100" rows="20"></textarea><br>
+    <label for="game-name-input">What game room would you like to enter?</label><br>
     <input id="game-name-input" type="text" size="100"><br>
     <input id="game-name-submit" type="button" value="Enter">
 
-    <script>
-        document.querySelector('#game-name-input').focus();
-        document.querySelector('#game-name-input').onkeyup = function(e) {
-            if (e.keyCode === 13) {  // enter, return
-                document.querySelector('#game-name-submit').click();
-            }
-        };
-
-        document.querySelector('#game-name-submit').onclick = function(e) {
-            var roomName = document.querySelector('#game-name-input').value;
-            window.location.pathname = '/game/' + roomName + '/';
-        };
-    </script>
+    {{ requesting_user|json_script:"requesting_user" }}
+    {% load static %}
+    <script src="{% static 'js/gamelobby.js' %}" type="text/javascript"></script>
 </body>
 </html>
