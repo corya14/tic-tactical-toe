@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 
 
 class Game(models.Model):
+    game_name = models.CharField( max_length=100, related_name='game_name' )
     winner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
                                related_name='winner', null=True, blank=True)
     creator = models.ForeignKey(
@@ -45,7 +46,7 @@ class Game(models.Model):
             pass
 
     @staticmethod
-    def create_new(user):
+    def create_new(user, game_name):
         """
         Create a new game and game squares
         :param user: the user that created the game
@@ -53,7 +54,7 @@ class Game(models.Model):
         """
         # make the game's name from the username and the number of
         # games they've created
-        new_game = Game(creator=user, current_turn=user)
+        new_game = Game(creator=user, current_turn=user, game_name=game_name)
         new_game.save()
         # for each row, create the proper number of cells based on rows
         for row in range(new_game.rows):
