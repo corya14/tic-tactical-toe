@@ -71,3 +71,16 @@ class UserGameRoomSocketConsumer(WebsocketConsumer):
 
     def front_end_update(self, event):
         self.send( text_data=event["text"] )
+
+class UserGameLobbyConsumer(WebsocketConsumer):
+    def connect(self):
+        if self.user.is_authenticated:
+            async_to_sync(self.channel_layer.group_add)('lobby', self.channel_name)
+            self.accept()
+    def disconnect(self, close_code):
+        if self.user.is_authenticated:
+            # Remove from lobby group
+            async_to_sync(self.channel_layer.group_discard)('lobby', self.channel_name)
+    def receive(self, text_data):
+        """Ignore any client->server comms for this socket"""
+        return
