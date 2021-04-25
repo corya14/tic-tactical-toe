@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 
 
 class Game(models.Model):
-    game_name = models.CharField(max_length=100)
+    game_name = models.CharField(max_length=100, unique=True)
     winner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
                                related_name='winner', null=True, blank=True)
     creator = models.ForeignKey(
@@ -27,6 +27,26 @@ class Game(models.Model):
     @staticmethod
     def get_available_games():
         return Game.objects.filter(opponent=None, completed=None)
+
+    @staticmethod
+    def game_exists(name):
+        return Game.objects.filter(game_name=name).count() > 0
+
+    @staticmethod
+    def user_may_join_or_play_game(username, game_name):
+        if not Game.game_exists(game_name):
+            # Game DNE, user may create
+            return True
+        else:
+            game = Game.filter(game_name=game_name)
+            if game.opponent is None:
+                return True
+            elif game.opponent.username == username:
+                return True
+            elif game.creator.username == username:
+                return True
+            else:
+                return False
 
     @staticmethod
     def created_count(user):

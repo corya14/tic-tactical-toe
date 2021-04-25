@@ -85,8 +85,7 @@ class GameModelInterface():
     @staticmethod
     def user_is_authenticated_to_game(user, game_name) -> bool:
         """Return true if user is auth'd to game, or game needs a new player"""
-        # FIXME
-        return True
+        return Game.user_may_join_or_play_game(user, game_name)
 
     @staticmethod
     def get_current_game_state(user, game_name) -> FrontEndUpdate:
