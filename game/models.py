@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 
 
 class Game(models.Model):
-    game_name = models.CharField( max_length=100 )
+    game_name = models.CharField(max_length=100)
     winner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
                                related_name='winner', null=True, blank=True)
     creator = models.ForeignKey(
@@ -194,6 +194,7 @@ class Cell(models.Model):
         # add log entry for move
         self.game.add_log('Cell ({0}, {1}) claimed with {2} tacs by {3}'
                           .format(self.col, self.row, self.tacs, self.owner.username))
+
 
 class GameLog(models.Model):
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
