@@ -1,4 +1,5 @@
 import json
+from game.models import Game
 
 # Encapculates an update to the back end
 
@@ -113,5 +114,7 @@ class GameModelInterface():
    @staticmethod
    def get_lobby_games():
       """ Return list of games that need another player """
-      #TODO: Replace with model query for games in need of another player
-      return [ "game1", "game2", "game3" ]
+      avail_games = Game.get_available_games()
+      avail_games_list = [x for x.game_name in avail_games]
+      print( avail_games_list )
+      return avail_games_list

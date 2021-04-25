@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 
 
 class Game(models.Model):
-    game_name = models.CharField( max_length=100, related_name='game_name' )
+    game_name = models.CharField( max_length=100 )
     winner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
                                related_name='winner', null=True, blank=True)
     creator = models.ForeignKey(
