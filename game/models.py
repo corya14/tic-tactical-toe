@@ -150,7 +150,7 @@ class Game(models.Model):
         self.save()
 
 
-class GameSquare(models.Model):
+class Cell(models.Model):
     STATUS_TYPES = (
         ('Free', 'Free'),
         ('RedOccupied', 'RedOccupied'),
@@ -162,6 +162,7 @@ class GameSquare(models.Model):
     status = models.CharField(choices=STATUS_TYPES,
                               max_length=25,
                               default='Free')
+    tacs = models.IntegerField(default=0)
     row = models.IntegerField()
     col = models.IntegerField()
 
@@ -170,7 +171,7 @@ class GameSquare(models.Model):
     modified = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
-        return '{0} - ({1}, {2})'.format(self.game, self.col, self.row)
+        return '{0} - ({1}, {2})[{3}]'.format(self.game, self.col, self.row, self.tacs)
 
     @staticmethod
     def get_by_id(id):
@@ -180,55 +181,18 @@ class GameSquare(models.Model):
             # TODO: Handle exception for gamesquare
             return None
 
-    def get_surrounding(self):
-        """
-        Returns this square's surrounding neighbors that are still Free
-        """
-        # TODO:
-        # http://stackoverflow.com/questions/2373306/pythonic-and-efficient-way-of-finding-adjacent-cells-in-grid
-        ajecency_matrix = [(i, j) for i in (-1, 0, 1)
-                           for j in (-1, 0, 1) if not (i == j == 0)]
-        results = []
-        for dx, dy in ajecency_matrix:
-            # boundaries check
-            if 0 <= (self.col + dy) < self.game.cols and 0 <= self.row + dx < self.game.rows:
-                # yield grid[x_coord + dx, y_coord + dy]
-                results.append((self.col + dy, self.row + dx))
-        return results
-
-    def claim(self, status_type, user):
+    def claim(self, status_type, user, tacs):
         """
         Claims the square for the user
         """
         self.owner = user
         self.status = status_type
-        self.save(update_fields=['status', 'owner'])
-
-        # get surrounding squares and update them if they can be updated
-        surrounding = self.get_surrounding()
-
-        for coords in surrounding:
-            # get square by coords
-            square = self.game.get_square_by_coords(coords)
-
-            if square and square.status == 'Free':
-                square.status = 'Surrounding'
-                square.owner = user
-                square.save()
+        self.tacs = tacs
+        self.save(update_fields=['status', 'owner', 'tacs'])
 
         # add log entry for move
-        self.game.add_log('Square claimed at ({0}, {1}) by {2}'
-                          .format(self.col, self.row, self.owner.username))
-
-        # set the current turn for the other player if there are still free
-        # squares to claim
-        if self.game.get_all_game_squares().filter(status='Free'):
-            self.game.next_player_turn()
-        else:
-            self.game.mark_complete(winner=user)
-        # let the game know about the move and results
-        self.game.send_game_update()
-
+        self.game.add_log('Cell ({0}, {1}) claimed with {2} tacs by {3}'
+                          .format(self.col, self.row, self.tacs, self.owner.username))
 
 class GameLog(models.Model):
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
