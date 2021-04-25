@@ -1,8 +1,10 @@
 # t-t-t
 Tic Tactical Toe. Grid-based game with Django.
 
-# Setup/Install Instructions
-TODO. Should probably release as docker.
+# Common Commands
+| Purpose | Command |
+| ------- | ------- |
+| Reset games DB | `python manage.py migrate game zero`
 
 # Local Insecure Dev/Test Run Instructions
 Recommended to create a python virtual environment with:
