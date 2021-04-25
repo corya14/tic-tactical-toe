@@ -6,7 +6,8 @@
 <h1>Tic Tactical Toe</h1>
 {% if user.is_authenticated %}
   Hi {{ user.username }}!
-  <p><a href="{% url 'logout' %}">Log Out</a></p>
+  <li><a href="{% url 'lobby' %}">Games Lobby</a></li>
+  <li><a href="{% url 'logout' %}">Log Out</a></li>
 {% else %}
   <p>You are not logged in</p>
   <li>
