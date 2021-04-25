@@ -4,7 +4,10 @@ from game.interfaces import GameModelInterface
 # Create your views here.
 
 def lobby(request):
-    return render(request, 'game/lobby.html')
+    if request.user.is_authenticated:
+        return render(request, 'game/lobby.html', {
+            'requesting_user': request.user.username
+        })
 
 def gameroom(request, game_name):
     if request.user.is_authenticated:
