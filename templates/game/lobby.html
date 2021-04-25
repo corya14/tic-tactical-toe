@@ -8,11 +8,19 @@
     <h1>Lobby</h1>
     <label for="available-games">Available games:</label><br>
     <textarea id="available-games" cols="100" rows="20"></textarea><br>
-    <label for="game-name-input">What game room would you like to enter?</label><br>
+    <label for="game-name-input">What game would you like to join or create?</label><br>
     <input id="game-name-input" type="text" size="100"><br>
+    {% if messages %}
+    <div class="messages" style="color:red;">
+        {% for message in messages %}
+            {{ message }}
+        {% endfor %}
+    </div>
+    {% endif %}
     <input id="game-name-submit" type="button" value="Enter">
 
     {{ requesting_user|json_script:"requesting_user" }}
+    {{ error_message|json_script:"error_message" }}
     {% load static %}
     <script src="{% static 'js/gamelobby.js' %}" type="text/javascript"></script>
 </body>

@@ -1,5 +1,6 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from game.interfaces import GameModelInterface
+from django.contrib import messages
 
 # Create your views here.
 
@@ -16,3 +17,6 @@ def gameroom(request, game_name):
                 'game_name': game_name,
                 'requesting_user': request.user.username
             })
+        else:
+            messages.error(request, "Invalid game name. Please try again.")
+            return redirect('lobby')
