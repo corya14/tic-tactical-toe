@@ -1,15 +1,19 @@
+from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import User
 
 # Create your models here.
 
+
 class Game(models.Model):
-    winner = models.ForeignKey( User, on_delete=models.CASCADE,
-        related_name='winner', null=True, blank=True)
-    creator = models.ForeignKey( User, on_delete=models.CASCADE, related_name='creator')
-    opponent = models.ForeignKey( User, on_delete=models.CASCADE,
-        related_name='opponent', null=True, blank=True)
-    current_turn = models.ForeignKey( User, on_delete=models.CASCADE, related_name='current_turn')
+    winner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                               related_name='winner', null=True, blank=True)
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='creator')
+    opponent = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                                 related_name='opponent', null=True, blank=True)
+    current_turn = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='current_turn')
 
     # dates
     completed = models.DateTimeField(null=True, blank=True)
@@ -61,7 +65,8 @@ class Game(models.Model):
                 )
                 new_square.save()
         # put first log into the GameLog
-        new_game.add_log('Game created by {0}'.format(new_game.creator.username))
+        new_game.add_log('Game created by {0}'.format(
+            new_game.creator.username))
 
         return new_game
 
@@ -151,8 +156,9 @@ class GameSquare(models.Model):
         ('RedOccupied', 'RedOccupied'),
         ('BlueOccupied', 'BlueOccupied')
     )
-    game = models.ForeignKey( Game, on_delete=models.CASCADE )
-    owner = models.ForeignKey( User, on_delete=models.CASCADE, null=True, blank=True)
+    game = models.ForeignKey(Game, on_delete=models.CASCADE)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
     status = models.CharField(choices=STATUS_TYPES,
                               max_length=25,
                               default='Free')
@@ -225,9 +231,10 @@ class GameSquare(models.Model):
 
 
 class GameLog(models.Model):
-    game = models.ForeignKey( Game, on_delete=models.CASCADE )
+    game = models.ForeignKey(Game, on_delete=models.CASCADE)
     text = models.CharField(max_length=300)
-    player = models.ForeignKey( User, on_delete=models.CASCADE, null=True, blank=True)
+    player = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
 
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
