@@ -21,6 +21,7 @@ class UserGameBoardSocketConsumer(WebsocketConsumer):
             async_to_sync(self.channel_layer.group_add)(
                 self.game_name, self.channel_name)
             self.accept()
+            GameModelInterface.create_or_rejoin_game(self.user, self.game_name)
             self.send(GameModelInterface.get_current_game_state(
                 self.user, self.game_name).serialize())
         else:

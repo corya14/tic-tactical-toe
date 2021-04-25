@@ -88,6 +88,14 @@ class GameModelInterface():
         return Game.user_may_join_or_play_game(user, game_name)
 
     @staticmethod
+    def create_or_rejoin_game(user, game_name):
+        """Create a game if it doesn't exist and join"""
+        if Game.exists(game_name):
+            Game.user_join_game(user, game_name)
+        else:
+            Game.create_new(user, game_name)
+
+    @staticmethod
     def get_current_game_state(user, game_name) -> FrontEndUpdate:
         # TODO: Get front end update from model
         return FrontEndUpdate()
@@ -121,6 +129,6 @@ class GameModelInterface():
     def get_lobby_games():
         """ Return list of games that need another player """
         avail_games = Game.get_available_games()
-        avail_games_list = [x for x.game_name in avail_games]
+        avail_games_list = [x.game_name for x in avail_games]
         print(avail_games_list)
         return avail_games_list

@@ -29,12 +29,12 @@ class Game(models.Model):
         return Game.objects.filter(opponent=None, completed=None)
 
     @staticmethod
-    def game_exists(name):
+    def exists(name):
         return Game.objects.filter(game_name=name).count() > 0
 
     @staticmethod
     def user_may_join_or_play_game(username, game_name):
-        if not Game.game_exists(game_name):
+        if not Game.exists(game_name):
             # Game DNE, user may create
             return True
         else:
@@ -47,6 +47,14 @@ class Game(models.Model):
                 return True
             else:
                 return False
+
+    @staticmethod
+    def user_join_game(user, game_name):
+        game = Game.objects.filter(game_name=game_name)
+        if not game.creator.username == user.username:
+            game.opponent = user
+        else:
+            pass  # creator may be rejoining
 
     @staticmethod
     def created_count(user):
@@ -76,9 +84,9 @@ class Game(models.Model):
         # games they've created
         new_game = Game(creator=user, current_turn=user, game_name=game_name)
         new_game.save()
-        # for each row, create the proper number of cells based on rows
-        for row in range(new_game.rows):
-            for col in range(new_game.cols):
+        # for each row, create the proper number of GameSquares based on rows
+        for row in range(1,6):
+            for col in range(1,6):
                 new_square = GameSquare(
                     game=new_game,
                     row=row,
@@ -86,6 +94,8 @@ class Game(models.Model):
                 )
                 new_square.save()
         # put first log into the GameLog
+        #self.set_square(1, 'c', 'red', 2)
+        #self.set_square(5, 'c', 'cyan', 1)
         new_game.add_log('Game created by {0}'.format(
             new_game.creator.username))
 
@@ -115,7 +125,7 @@ class Game(models.Model):
 
     def get_square_by_coords(self, coords):
         """
-        Retrieves the cell based on it's (x,y) or (row, col)
+        Retrieves the GameSquare based on it's (x,y) or (row, col)
         """
         try:
             square = GameSquare.objects.get(row=coords[1],
@@ -171,7 +181,7 @@ class Game(models.Model):
         self.save()
 
 
-class Cell(models.Model):
+class GameSquare(models.Model):
     STATUS_TYPES = (
         ('Free', 'Free'),
         ('RedOccupied', 'RedOccupied'),
@@ -212,7 +222,7 @@ class Cell(models.Model):
         self.save(update_fields=['status', 'owner', 'tacs'])
 
         # add log entry for move
-        self.game.add_log('Cell ({0}, {1}) claimed with {2} tacs by {3}'
+        self.game.add_log('GameSquare ({0}, {1}) claimed with {2} tacs by {3}'
                           .format(self.col, self.row, self.tacs, self.owner.username))
 
 
