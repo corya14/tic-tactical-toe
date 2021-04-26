@@ -51,9 +51,10 @@ class Game(models.Model):
 
     @staticmethod
     def user_join_game(user, game_name):
-        game = Game.objects.filter(game_name=game_name)
+        game = Game.objects.filter(game_name=game_name).get()
         if not game.creator.username == user.username:
             game.opponent = user
+            game.get_game_square(1,3).claim(user, 2)
         else:
             pass  # creator may be rejoining
 

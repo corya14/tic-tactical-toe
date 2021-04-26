@@ -22,8 +22,15 @@ class UserGameBoardSocketConsumer(WebsocketConsumer):
                 self.game_name, self.channel_name)
             self.accept()
             GameModelInterface.create_or_rejoin_game(self.user, self.game_name)
-            self.send(GameModelInterface.get_current_game_state(
-                self.user, self.game_name).serialize())
+            frontend_update = GameModelInterface.get_current_game_state(
+                self.user, self.game_name)
+            async_to_sync(self.channel_layer.group_send)(
+                self.game_name,
+                {
+                    "type": "front_end_update",
+                    "text": frontend_update.serialize(),
+                },
+            )
         else:
             return  # User isn't authenticated OR not authenticated to game
 
