@@ -55,6 +55,7 @@ class Game(models.Model):
         if not game.creator.username == user.username:
             game.opponent = user
             game.get_game_square(1,3).claim(user, 2)
+            game.save(update_fields=['opponent'])
         else:
             pass  # creator may be rejoining
 
