@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models import UniqueConstraint
 
 # Create your models here.
 
@@ -38,7 +39,7 @@ class Game(models.Model):
             # Game DNE, user may create
             return True
         else:
-            game = Game.filter(game_name=game_name)
+            game = Game.objects.filter(game_name=game_name).get()
             if game.opponent is None:
                 return True
             elif game.opponent.username == username:
@@ -85,17 +86,17 @@ class Game(models.Model):
         new_game = Game(creator=user, current_turn=user, game_name=game_name)
         new_game.save()
         # for each row, create the proper number of GameSquares based on rows
-        for row in range(1,6):
-            for col in range(1,6):
+        for row in range(1, 6):
+            for col in range(1, 6):
                 new_square = GameSquare(
                     game=new_game,
                     row=row,
                     col=col
                 )
                 new_square.save()
+        new_game.get_game_square(1, 3).set_tacs(2)
+        new_game.get_game_square(5, 3).claim(user, 1)
         # put first log into the GameLog
-        #self.set_square(1, 'c', 'red', 2)
-        #self.set_square(5, 'c', 'cyan', 1)
         new_game.add_log('Game created by {0}'.format(
             new_game.creator.username))
 
@@ -114,12 +115,12 @@ class Game(models.Model):
         """
         return GameSquare.objects.filter(game=self)
 
-    def get_game_square(row, col):
+    def get_game_square(self, row, col):
         """
         Gets a square for a game by it's row and col pos
         """
         try:
-            return GameSquare.objects.get(game=self, cols=col, rows=row)
+            return GameSquare.objects.get(game=self, col=col, row=row)
         except GameSquare.DoesNotExist:
             return None
 
@@ -182,17 +183,16 @@ class Game(models.Model):
 
 
 class GameSquare(models.Model):
-    STATUS_TYPES = (
-        ('Free', 'Free'),
-        ('RedOccupied', 'RedOccupied'),
-        ('BlueOccupied', 'BlueOccupied')
-    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(name='uniqueness', fields=[
+                                    'game', 'row', 'col'])
+        ]
+
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
-    status = models.CharField(choices=STATUS_TYPES,
-                              max_length=25,
-                              default='Free')
     tacs = models.IntegerField(default=0)
     row = models.IntegerField()
     col = models.IntegerField()
@@ -205,6 +205,14 @@ class GameSquare(models.Model):
         return '{0} - ({1}, {2})[{3}]'.format(self.game, self.col, self.row, self.tacs)
 
     @staticmethod
+    def get(row, col, game):
+        return GameSquare.objects.filter(row=row, col=col, game=game).get()
+
+    def set_tacs(self, tacs):
+        self.tacs = tacs
+        self.save(update_fields=['tacs'])
+
+    @staticmethod
     def get_by_id(id):
         try:
             return GameSquare.objects.get(pk=id)
@@ -212,14 +220,13 @@ class GameSquare(models.Model):
             # TODO: Handle exception for gamesquare
             return None
 
-    def claim(self, status_type, user, tacs):
+    def claim(self, user, tacs):
         """
         Claims the square for the user
         """
         self.owner = user
-        self.status = status_type
         self.tacs = tacs
-        self.save(update_fields=['status', 'owner', 'tacs'])
+        self.save(update_fields=['owner', 'tacs'])
 
         # add log entry for move
         self.game.add_log('GameSquare ({0}, {1}) claimed with {2} tacs by {3}'

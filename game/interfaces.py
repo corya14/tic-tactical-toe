@@ -1,5 +1,6 @@
 import json
 from game.models import Game
+from game.models import GameSquare
 
 # Encapculates an update to the back end
 
@@ -56,6 +57,15 @@ class FrontEndUpdate():
     def get_square_id(row, col):
         return str(row) + str(col)
 
+    @staticmethod
+    def int_col_to_char(col):
+        if col == 1: return 'a'
+        elif col == 2: return 'b'
+        elif col == 3: return 'c'
+        elif col == 4: return 'd'
+        elif col == 5: return 'e'
+        else: return None
+
     def init_square(self, row, col):
         id = FrontEndUpdate.get_square_id(row, col)
         self.gameboard[id] = FrontEndUpdate.square_dict(id)
@@ -96,9 +106,28 @@ class GameModelInterface():
             Game.create_new(user, game_name)
 
     @staticmethod
+    def game_to_frontend_update(game) -> FrontEndUpdate:
+        frontend_update = FrontEndUpdate()
+        for row in range(1, 6):
+            for col in range(1, 6):
+                char_col = FrontEndUpdate.int_col_to_char(col)
+                gamesquare = GameSquare.objects.filter(
+                    game=game, row=row, col=col).get()
+                if gamesquare.owner == None:
+                    color = 'white'
+                elif gamesquare.owner == game.creator:
+                    color = 'cyan'
+                else:
+                    color = 'red'
+                frontend_update.set_square(
+                    row=row, col=char_col, color=color, value=gamesquare.tacs)
+        return frontend_update
+
+    @staticmethod
     def get_current_game_state(user, game_name) -> FrontEndUpdate:
         # TODO: Get front end update from model
-        return FrontEndUpdate()
+        game = Game.objects.filter(game_name=game_name)
+        return GameModelInterface.game_to_frontend_update(game.get())
 
     @staticmethod
     def give_update(backend_update) -> FrontEndUpdate:
