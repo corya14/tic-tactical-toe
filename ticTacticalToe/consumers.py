@@ -3,6 +3,9 @@ from channels.generic.websocket import WebsocketConsumer
 from game.interfaces import BackEndUpdate
 from game.interfaces import GameModelInterface
 from asgiref.sync import async_to_sync
+import logging
+authlog = logging.getLogger('auth')
+generallog = logging.getLogger('general')
 
 
 class UserGameBoardSocketConsumer(WebsocketConsumer):
@@ -18,6 +21,10 @@ class UserGameBoardSocketConsumer(WebsocketConsumer):
         user_has_game_auth = GameModelInterface.user_is_authenticated_to_game(
             self.user, self.game_name)
         if self.user.is_authenticated and user_has_game_auth:
+            authlog.info('User {} connected gameboard socket for game {}'.format(
+                self.user.username, self.game_name))
+            generallog.info('Subscribing user {} gameboard socket to game {} group'.format(
+                self.user.username, self.game_name))
             async_to_sync(self.channel_layer.group_add)(
                 self.game_name, self.channel_name)
             self.accept()
@@ -32,6 +39,8 @@ class UserGameBoardSocketConsumer(WebsocketConsumer):
                 },
             )
         else:
+            authlog.warning('Unauthorized user {} attempted to connect a socket to game {}'.format(
+                self.user.username, self.game_name))
             return  # User isn't authenticated OR not authenticated to game
 
     def disconnect(self, close_code):
@@ -60,10 +69,16 @@ class UserGameRoomSocketConsumer(WebsocketConsumer):
         user_has_game_auth = GameModelInterface.user_is_authenticated_to_game(
             self.user, self.game_name)
         if self.user.is_authenticated and user_has_game_auth:
+            authlog.info('User {} connected gameroom socket for game {}'.format(
+                self.user.username, self.game_name))
+            generallog.info('Subscribing user {} gameroom socket to game {} group'.format(
+                self.user.username, self.game_name))
             async_to_sync(self.channel_layer.group_add)(
                 self.game_name, self.channel_name)
             self.accept()
         else:
+            authlog.warning('Unauthorized user {} attempted to connect a socket to game {}'.format(
+                self.user.username, self.game_name))
             return  # User isn't authenticated OR not authenticated to game
 
     def disconnect(self, close_code):
@@ -96,10 +111,17 @@ class UserGameLobbyConsumer(WebsocketConsumer):
     def connect(self):
         self.user = self.scope["user"]
         if self.user.is_authenticated:
+            authlog.info('User {} connected to a lobby socket'.format(
+                self.user.username))
+            generallog.info('Subscribing user {} lobby socket to lobby group'.format(
+                self.user.username))
             async_to_sync(self.channel_layer.group_add)(
                 'lobby', self.channel_name)
             self.accept()
             self.send(json.dumps(GameModelInterface.get_lobby_games()))
+        else:
+            authlog.warning('Unauthorized user {} attempted to connect a socket to lobby'.format(
+                self.user.username, self.game_name))
 
     def disconnect(self, close_code):
         if self.user.is_authenticated:
