@@ -2,6 +2,8 @@ import json
 from game.models import Game
 from game.models import GameSquare
 
+import logging
+gameslog = logging.getLogger('games')
 
 class BackEndUpdate():
     """Encapculates an update to the back end
@@ -133,7 +135,6 @@ class GameModelInterface():
 
     @staticmethod
     def get_current_game_state(user, game_name) -> FrontEndUpdate:
-        # TODO: Get front end update from model
         game = Game.objects.filter(game_name=game_name)
         return GameModelInterface.game_to_frontend_update(game.get())
 
@@ -143,22 +144,18 @@ class GameModelInterface():
         try:
             game = Game.objects.filter(game_name=backend_update.game()).get()
         except:
-            # TODO: Replace with logging
-            print('Problem finding game {}'.format(backend_update.game()))
+            gameslog.warning('Problem finding game {}'.format(backend_update.game()))
             return
         if not game.is_associated_with_user(backend_update.user()):
-            # TODO: Replace with logging
-            print('Game {} is not associated with user {}'.format(
+            gameslog.warning('Game {} is not associated with user {}'.format(
                 backend_update.game(), backend_update.user().username))
             return
         elif not game.is_ready_to_play():
-            # TODO: Replace with logging
-            print('Game {} is not ready to play'.format(backend_update.game()))
+            gameslog.warning('Game {} is not ready to play'.format(backend_update.game()))
             return
         else:
             # User is part of game and game is ready to play
-            # TODO: Replace with logging
-            print('Received update for game {}'.format(backend_update.game()))
+            gameslog.info('Received update for game {}'.format(backend_update.game()))
             game.update(backend_update)
         """
         Accept move_str from user for given game (str name of game)
