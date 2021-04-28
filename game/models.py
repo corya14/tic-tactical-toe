@@ -110,8 +110,23 @@ class Game(models.Model):
     def is_associated_with_user(self, user):
         return self.creator == user or self.opponent == user
 
-    def update(self, backend_update):
-        pass
+    def to_frontend_update(self):
+        from game.interfaces import FrontEndUpdate
+        frontend_update = FrontEndUpdate()
+        for row in range(1, 6):
+            for col in range(1, 6):
+                char_col = FrontEndUpdate.int_col_to_char(col)
+                gamesquare = GameSquare.objects.filter(
+                    game=self, row=row, col=col).get()
+                if gamesquare.owner == None:
+                    color = 'white'
+                elif gamesquare.owner == self.creator:
+                    color = 'cyan'
+                else:
+                    color = 'red'
+                frontend_update.set_square(
+                    row=row, col=char_col, color=color, value=gamesquare.tacs)
+        return frontend_update
 
     def add_log(self, text, user=None):
         """
