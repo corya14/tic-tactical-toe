@@ -3,9 +3,26 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models import UniqueConstraint
 
+import logging
+gameslog = logging.getLogger('games')
+
+
+# Generating whitelist of all possible moves
+# Ex move string: (1)(a1,a1)
+
+TACS_LIMIT = 9
+cols = ['a','b','c','d','e']
+square_strs = []
+for row in range(1,6):
+    for col in cols:
+        square_strs.append(col+str(row))
+MOVE_WHITELIST = {} # Hashmap will probably work better
+for i in range(1,TACS_LIMIT+1):
+    for x in square_strs:
+        for y in square_strs:
+            MOVE_WHITELIST['({})({},{})'.format(i,x,y)] = True
+
 # Create your models here.
-
-
 class Game(models.Model):
     game_name = models.CharField(max_length=100, unique=True)
     winner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
@@ -111,8 +128,11 @@ class Game(models.Model):
         return self.creator == user or self.opponent == user
 
     def is_valid_move(self, backend_update):
-        # FIXME
-        return True
+        if backend_update.move() not in MOVE_WHITELIST:
+            gameslog.warning('Invalid move: {}'.format(backend_update.move()))
+            return False
+        else:
+            return True
 
     def update(self, backend_update):
         if not self.is_valid_move(backend_update):
