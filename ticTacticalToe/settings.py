@@ -157,25 +157,25 @@ LOGGING = {
     },
     'handlers': {
         'console': {
-            'level': 'INFO',
+            'level': 'DEBUG',
             'filters': ['require_debug_true'],
             'class': 'logging.StreamHandler',
             'formatter': 'simple'
         },
         'auth': {
-            'level': 'INFO',
+            'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': 'logs/auth.log',
             'formatter': 'simple'
         },
         'games': {
-            'level': 'INFO',
+            'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': 'logs/games.log',
             'formatter': 'simple'
         },
         'general': {
-            'level': 'INFO',
+            'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': 'logs/general.log',
             'formatter': 'simple'
@@ -183,18 +183,18 @@ LOGGING = {
     },
     'loggers': {
         'auth': {
-            'handlers': ['console','auth'],
-            'level': 'INFO',
+            'handlers': ['console', 'auth'],
+            'level': 'DEBUG',
             'propagate': True,
         },
         'games': {
-            'handlers': ['console','games'],
-            'level': 'INFO',
+            'handlers': ['console', 'games'],
+            'level': 'DEBUG',
             'propagate': True,
         },
         'general': {
-            'handlers': ['console','general'],
-            'level': 'INFO',
+            'handlers': ['console', 'general'],
+            'level': 'DEBUG',
             'propagate': True,
         },
     }
