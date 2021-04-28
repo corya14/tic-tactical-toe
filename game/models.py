@@ -104,6 +104,15 @@ class Game(models.Model):
 
         return new_game
 
+    def is_ready_to_play(self):
+        return self.creator != None and self.opponent != None
+
+    def is_associated_with_user(self, user):
+        return self.creator == user or self.opponent == user
+
+    def update(self, backend_update):
+        pass
+
     def add_log(self, text, user=None):
         """
         Adds a text log associated with this game.

@@ -92,7 +92,7 @@ class UserGameRoomSocketConsumer(WebsocketConsumer):
             text_data_json = json.loads(text_data)
             game = text_data_json['game']
             move = text_data_json['move']
-            backend_update = BackEndUpdate(self.user.username, game, move)
+            backend_update = BackEndUpdate(self.user, game, move)
             frontend_update = GameModelInterface.give_update(backend_update)
 
             async_to_sync(self.channel_layer.group_send)(

@@ -2,10 +2,11 @@ import json
 from game.models import Game
 from game.models import GameSquare
 
-# Encapculates an update to the back end
-
 
 class BackEndUpdate():
+    """Encapculates an update to the back end
+    """
+
     def __init__(self, user, game, move):
         self._user = user
         self._game = game
@@ -23,10 +24,10 @@ class BackEndUpdate():
     def __str__(self):
         return "BackEndUpdate{{USER[{}]GAME[{}]MOVE[{}]}}".format(self._user, self._game, self._move)
 
-# Encapsulates an update to the front end
-
 
 class FrontEndUpdate():
+    """ Encapsulates an update to the front end
+    """
 
     @staticmethod
     def square_dict(id, color='white', value=0):
@@ -59,12 +60,18 @@ class FrontEndUpdate():
 
     @staticmethod
     def int_col_to_char(col):
-        if col == 1: return 'a'
-        elif col == 2: return 'b'
-        elif col == 3: return 'c'
-        elif col == 4: return 'd'
-        elif col == 5: return 'e'
-        else: return None
+        if col == 1:
+            return 'a'
+        elif col == 2:
+            return 'b'
+        elif col == 3:
+            return 'c'
+        elif col == 4:
+            return 'd'
+        elif col == 5:
+            return 'e'
+        else:
+            return None
 
     def init_square(self, row, col):
         id = FrontEndUpdate.get_square_id(row, col)
@@ -89,8 +96,9 @@ class FrontEndUpdate():
     def serialize(self):
         return json.dumps(self.data_dict)
 
-
 # Define an object adapter for interactions with game model
+
+
 class GameModelInterface():
     @staticmethod
     def user_is_authenticated_to_game(user, game_name) -> bool:
@@ -131,6 +139,27 @@ class GameModelInterface():
 
     @staticmethod
     def give_update(backend_update) -> FrontEndUpdate:
+        # Some basic top level checks before update even gets to game
+        try:
+            game = Game.objects.filter(game_name=backend_update.game()).get()
+        except:
+            # TODO: Replace with logging
+            print('Problem finding game {}'.format(backend_update.game()))
+            return
+        if not game.is_associated_with_user(backend_update.user()):
+            # TODO: Replace with logging
+            print('Game {} is not associated with user {}'.format(
+                backend_update.game(), backend_update.user().username))
+            return
+        elif not game.is_ready_to_play():
+            # TODO: Replace with logging
+            print('Game {} is not ready to play'.format(backend_update.game()))
+            return
+        else:
+            # User is part of game and game is ready to play
+            # TODO: Replace with logging
+            print('Received update for game {}'.format(backend_update.game()))
+            game.update(backend_update)
         """
         Accept move_str from user for given game (str name of game)
         Should check:
