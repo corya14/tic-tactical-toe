@@ -8,6 +8,16 @@ authlog = logging.getLogger('auth')
 generallog = logging.getLogger('general')
 
 
+def update_game_lobby(channel_layer):
+    async_to_sync(channel_layer.group_send)(
+        'lobby',
+        {
+            "type": "lobby_update",
+            "text": json.dumps(GameModelInterface.get_lobby_games()),
+        },
+    )
+
+
 class UserGameBoardSocketConsumer(WebsocketConsumer):
     """
     Socket consumer for updating the gameboard ONLY
@@ -29,6 +39,8 @@ class UserGameBoardSocketConsumer(WebsocketConsumer):
                 self.game_name, self.channel_name)
             self.accept()
             GameModelInterface.create_or_rejoin_game(self.user, self.game_name)
+            generallog.info('Updating lobby')
+            update_game_lobby(self.channel_layer)
             frontend_update = GameModelInterface.get_current_game_state(
                 self.user, self.game_name)
             async_to_sync(self.channel_layer.group_send)(
@@ -132,3 +144,6 @@ class UserGameLobbyConsumer(WebsocketConsumer):
     def receive(self, text_data):
         """Ignore any client->server comms for this socket"""
         return
+
+    def lobby_update(self, event):
+        self.send(text_data=event["text"])
