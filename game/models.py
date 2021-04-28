@@ -145,29 +145,6 @@ class Game(models.Model):
         """
         return GameLog.objects.filter(game=self)
 
-    def send_game_update(self):
-        """
-        Send the updated game information and squares to the game's channel group
-        """
-        # imported here to avoid circular import
-        from .serializers import GameSquareSerializer, GameLogSerializer, GameSerializer
-
-        squares = self.get_all_game_squares()
-        square_serializer = GameSquareSerializer(squares, many=True)
-
-        # get game log
-        log = self.get_game_log()
-        log_serializer = GameLogSerializer(log, many=True)
-
-        game_serilizer = GameSerializer(self)
-
-        message = {'game': game_serilizer.data,
-                   'log': log_serializer.data,
-                   'squares': square_serializer.data}
-
-        game_group = 'game-{0}'.format(self.id)
-        Group(game_group).send({'text': json.dumps(message)})
-
     def next_player_turn(self):
         """
         Sets the next player's turn
