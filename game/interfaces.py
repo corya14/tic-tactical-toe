@@ -10,22 +10,22 @@ class BackEndUpdate():
     """Encapculates an update to the back end
     """
 
-    def __init__(self, user, game, move):
+    def __init__(self, user, game_name, move):
         self._user = user
-        self._game = game
+        self._game_name = game_name
         self._move = move
 
     def user(self):
         return self._user
 
-    def game(self):
-        return self._game
+    def game_name(self):
+        return self._game_name
 
     def move(self):
         return self._move
 
     def __str__(self):
-        return "BackEndUpdate{{USER[{}]GAME[{}]MOVE[{}]}}".format(self._user, self._game, self._move)
+        return "BackEndUpdate{{USER[{}]GAME[{}]MOVE[{}]}}".format(self._user, self._game_name, self._move)
 
 
 class FrontEndUpdate():
@@ -129,14 +129,14 @@ class GameModelInterface():
     def give_update(backend_update) -> FrontEndUpdate:
         # Some basic top level checks before update even gets to game
         try:
-            game = Game.objects.filter(game_name=backend_update.game()).get()
+            game = Game.objects.filter(game_name=backend_update.game_name()).get()
         except:
             gameslog.warning(
-                'Problem finding game {}'.format(backend_update.game()))
+                'Problem finding game {}'.format(backend_update.game_name()))
             return
         if not game.is_associated_with_user(backend_update.user()):
             gameslog.warning('Game {} is not associated with user {}'.format(
-                backend_update.game(), backend_update.user().username))
+                backend_update.game_name(), backend_update.user().username))
             return
         elif not game.is_ready_to_play():
             gameslog.warning(
@@ -145,7 +145,7 @@ class GameModelInterface():
         else:
             # User is part of game and game is ready to play
             gameslog.info('Received update for game {}'.format(
-                backend_update.game()))
+                backend_update.game_name()))
             game.update(backend_update)
         """
         Accept move_str from user for given game (str name of game)

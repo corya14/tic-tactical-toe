@@ -110,6 +110,17 @@ class Game(models.Model):
     def is_associated_with_user(self, user):
         return self.creator == user or self.opponent == user
 
+    def is_valid_move(self, backend_update):
+        # FIXME
+        return True
+
+    def update(self, backend_update):
+        if not self.is_valid_move(backend_update):
+            gameslog.debug("User {} attempted invalid move {} in game {}".format(
+                backend_update.user().username, backend_update.move(), backend_update.game_name()))
+            front_end_update = self.to_frontend_update()
+        pass
+
     def to_frontend_update(self):
         from game.interfaces import FrontEndUpdate
         frontend_update = FrontEndUpdate()
