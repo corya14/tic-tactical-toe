@@ -18,6 +18,17 @@ def update_game_lobby(channel_layer):
     )
 
 
+def update_gameboard(channel_layer, game_name, frontend_update):
+    """Broadcast update to the gameboard for game_name
+    """
+    async_to_sync(channel_layer.group_send)(
+        game_name,
+        {
+            "type": "front_end_update",
+            "text": frontend_update.serialize(),
+        },
+    )
+
 class UserGameBoardSocketConsumer(WebsocketConsumer):
     """
     Socket consumer for updating the gameboard ONLY
@@ -43,13 +54,9 @@ class UserGameBoardSocketConsumer(WebsocketConsumer):
             update_game_lobby(self.channel_layer)
             frontend_update = GameModelInterface.get_current_game_state(
                 self.user, self.game_name)
-            async_to_sync(self.channel_layer.group_send)(
-                self.game_name,
-                {
-                    "type": "front_end_update",
-                    "text": frontend_update.serialize(),
-                },
-            )
+            if frontend_update is not None:
+                update_gameboard(self.channel_layer,
+                                self.game_name, frontend_update)
         else:
             authlog.warning('Unauthorized user {} attempted to connect a socket to game {}'.format(
                 self.user.username, self.game_name))
@@ -106,14 +113,9 @@ class UserGameRoomSocketConsumer(WebsocketConsumer):
             move = text_data_json['move']
             backend_update = BackEndUpdate(self.user, game_name, move)
             frontend_update = GameModelInterface.give_update(backend_update)
-
-            async_to_sync(self.channel_layer.group_send)(
-                self.game_name,
-                {
-                    "type": "front_end_update",
-                    "text": frontend_update.serialize(),
-                },
-            )
+            if frontend_update is not None:
+                update_gameboard(self.channel_layer,
+                                    self.game_name, frontend_update)
 
     def front_end_update(self, event):
         self.send(text_data=event["text"])
