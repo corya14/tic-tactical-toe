@@ -20,7 +20,7 @@ MOVE_WHITELIST = {} # Hashmap will probably work better
 for i in range(1,TACS_LIMIT+1):
     for x in square_strs:
         for y in square_strs:
-            MOVE_WHITELIST['({})({},{})'.format(i,x,y)] = True
+            MOVE_WHITELIST['({})|({},{})'.format(i,x,y)] = True
 
 # Create your models here.
 class Game(models.Model):
@@ -129,10 +129,14 @@ class Game(models.Model):
 
     def is_valid_move(self, backend_update):
         if backend_update.move() not in MOVE_WHITELIST:
-            gameslog.warning('Invalid move: {}'.format(backend_update.move()))
+            gameslog.warning('Invalid move: {} - Not in whitelist'.format(backend_update.move()))
             return False
-        else:
-            return True
+
+        # check if user owns source square
+        if not backend_update.get_src_square().owner == backend_update.user():
+            gameslog.warning("Invalid move: {} - User doesn't own src square".format(backend_update.move()))
+
+        return True
 
     def update(self, backend_update):
         if not self.is_valid_move(backend_update):

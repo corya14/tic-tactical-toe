@@ -5,6 +5,12 @@ from game.models import GameSquare
 import logging
 gameslog = logging.getLogger('games')
 
+cols = {}
+cols['a'] = 1
+cols['b'] = 2
+cols['c'] = 3
+cols['d'] = 4
+cols['e'] = 5
 
 class BackEndUpdate():
     """Encapculates an update to the back end
@@ -23,6 +29,15 @@ class BackEndUpdate():
 
     def move(self):
         return self._move
+
+    def get_src_square(self):
+        game = Game.objects.filter(game_name=self._game_name).get()
+        print(self._move)
+        src_str = self._move.split('|')[1][1:3]
+        print('src str: {}'.format(src_str))
+        col = cols[src_str[0]]
+        row = src_str[1]
+        return game.get_game_square(row,col)
 
     def __str__(self):
         return "BackEndUpdate{{USER[{}]GAME[{}]MOVE[{}]}}".format(self._user, self._game_name, self._move)
