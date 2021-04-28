@@ -129,7 +129,8 @@ class GameModelInterface():
     def give_update(backend_update) -> FrontEndUpdate:
         # Some basic top level checks before update even gets to game
         try:
-            game = Game.objects.filter(game_name=backend_update.game_name()).get()
+            game = Game.objects.filter(
+                game_name=backend_update.game_name()).get()
         except:
             gameslog.warning(
                 'Problem finding game {}'.format(backend_update.game_name()))
@@ -140,7 +141,7 @@ class GameModelInterface():
             return
         elif not game.is_ready_to_play():
             gameslog.warning(
-                'Game {} is not ready to play'.format(backend_update.game()))
+                'Game {} is not ready to play'.format(backend_update.game_name()))
             return
         else:
             # User is part of game and game is ready to play
