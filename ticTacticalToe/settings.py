@@ -140,3 +140,62 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels.layers.InMemoryChannelLayer"
     }
 }
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {
+            'format': '{asctime} [{levelname}] {message}',
+            'style': '{',
+        },
+    },
+    'filters': {
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+        'auth': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/auth.log',
+            'formatter': 'simple'
+        },
+        'games': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/games.log',
+            'formatter': 'simple'
+        },
+        'general': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/general.log',
+            'formatter': 'simple'
+        },
+    },
+    'loggers': {
+        'auth': {
+            'handlers': ['console','auth'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'games': {
+            'handlers': ['console','games'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'general': {
+            'handlers': ['console','general'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    }
+}
