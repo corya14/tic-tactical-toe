@@ -18,6 +18,7 @@ COPY game /app/game
 COPY static /app/static
 COPY templates /app/templates
 COPY manage.py /app
+RUN mkdir -p /app/logs
 
 WORKDIR /app
 
