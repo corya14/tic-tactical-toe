@@ -2,27 +2,18 @@ from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models import UniqueConstraint
+import re
 
 import logging
 gameslog = logging.getLogger('games')
 
 
-# Generating whitelist of all possible moves
-# Ex move string: (1)(a1,a1)
-
-TACS_LIMIT = 9
-cols = ['a','b','c','d','e']
-square_strs = []
-for row in range(1,6):
-    for col in cols:
-        square_strs.append(col+str(row))
-MOVE_WHITELIST = {} # Hashmap will probably work better
-for i in range(1,TACS_LIMIT+1):
-    for x in square_strs:
-        for y in square_strs:
-            MOVE_WHITELIST['({})|({},{})'.format(i,x,y)] = True
+# Move verification regex
+VERIFY_REGEX = re.compile(r'^\([1-9]\)|\([a-e][1-5],[a-e][1-5]\)$')
 
 # Create your models here.
+
+
 class Game(models.Model):
     game_name = models.CharField(max_length=100, unique=True)
     winner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
@@ -128,13 +119,15 @@ class Game(models.Model):
         return self.creator == user or self.opponent == user
 
     def is_valid_move(self, backend_update):
-        if backend_update.move() not in MOVE_WHITELIST:
-            gameslog.warning('Invalid move: {} - Not in whitelist'.format(backend_update.move()))
+        if not VERIFY_REGEX.match(backend_update.move()):
+            gameslog.warning(
+                'Invalid move: {} - Not in whitelist'.format(backend_update.move()))
             return False
 
         # check if user owns source square
         if not backend_update.get_src_square().owner == backend_update.user():
-            gameslog.warning("Invalid move: {} - User doesn't own src square".format(backend_update.move()))
+            gameslog.warning(
+                "Invalid move: {} - User doesn't own src square".format(backend_update.move()))
 
         return True
 
