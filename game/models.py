@@ -12,7 +12,7 @@ authlog = logging.getLogger('auth')
 
 
 # Move verification regex
-VERIFY_REGEX = re.compile(r'^\([1-9]\)|\([a-e][1-5],[a-e][1-5]\)$')
+VERIFY_REGEX = re.compile(r'^\([0-9]?\)|\([a-e][1-5],[a-e][1-5]\)$')
 
 # Create your models here.
 
@@ -98,7 +98,8 @@ class Game(models.Model):
             game.get_game_square(1, 3).claim(user, 2)
             game.save(update_fields=['opponent'])
         elif game.creator.username == user.username:
-            authlog.info('Creator {} rejoining game {}'.format(user.username, game_name))
+            authlog.info('Creator {} rejoining game {}'.format(
+                user.username, game_name))
         else:
             pass  # creator may be rejoining
 
@@ -189,19 +190,23 @@ class Game(models.Model):
                 "Invalid move: {} - Source has no tacs".format(backend_update.move()))
             return False
 
-        # Make sure player isn't trying to move too many tacs
-        if src_sq.tacs < backend_update.tacs():
-            gameslog.warning(
-                "Invalid move: {} - Source doesn't have enough tacs".format(backend_update.move()))
-            return False
-
         dst_sq = backend_update.dst()
 
-        # Avoid having more than 9 tacs in a square
-        if dst_sq.owner == src_sq.owner and backend_update.tacs() + dst_sq.tacs > 9:
-            gameslog.warning(
-                "Invalid move: {} - Destination would have too many tacs".format(backend_update.move()))
-            return False
+        if src_sq == dst_sq:
+            gameslog.debug("Ignoring tacs quantity constraints for IDLE move {} by user {}".format(
+                backend_update.move(), backend_update.user().username))
+        else:
+            # Make sure player isn't trying to move too many tacs
+            if src_sq.tacs < backend_update.tacs():
+                gameslog.warning(
+                    "Invalid move: {} - Source doesn't have enough tacs".format(backend_update.move()))
+                return False
+
+            # Avoid having more than 9 tacs in a square
+            if dst_sq.owner == src_sq.owner and backend_update.tacs() + dst_sq.tacs > 9:
+                gameslog.warning(
+                    "Invalid move: {} - Destination would have too many tacs".format(backend_update.move()))
+                return False
 
         # Make sure dst square is adjacent
         row_delta = abs(src_sq.row - dst_sq.row)

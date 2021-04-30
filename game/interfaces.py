@@ -21,9 +21,19 @@ class BackEndUpdate():
         self._user = user
         self._game_name = game_name
         self._move = move
-        self._src_sq = self._set_src_square()
-        self._dst_sq = self._set_dst_square()
-        self._num_tacs = self._set_num_tacs()
+        # Warning: update might be invalid
+        try:
+            self._src_sq = self._set_src_square()
+        except:
+            self._src_sq = None
+        try:
+            self._dst_sq = self._set_dst_square()
+        except:
+            self._dst_sq = None
+        try:
+            self._num_tacs = self._set_num_tacs()
+        except:
+            self._num_tacs = 0
 
     def user(self):
         return self._user
@@ -62,7 +72,11 @@ class BackEndUpdate():
         return game.get_game_square(row, col)
 
     def _set_num_tacs(self):
-        return int(self._move.split('|')[0].replace('(', '').replace(')', ''))
+        tacs_str = self._move.split('|')[0]
+        if len(tacs_str) == 2 and tacs_str[0] == '(' and tacs_str[1] == ')':
+            return 0
+        else:
+            return int(self._move.split('|')[0].replace('(', '').replace(')', ''))
 
     def __str__(self):
         return "BackEndUpdate{{USER[{}]GAME[{}]MOVE[{}]}}".format(self._user, self._game_name, self._move)
