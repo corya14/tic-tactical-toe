@@ -21,6 +21,12 @@ userSocket.onmessage = function(e) {
    document.querySelector('#player1').style.backgroundColor = ''
    document.querySelector('#player2').style.backgroundColor = ''
    document.querySelector(cur_turn_ele).style.backgroundColor = 'yellow'
+
+   const gamelogs = data.log
+   document.querySelector('#game-log').value = ''
+   for (i in gamelogs) {
+      document.querySelector('#game-log').value += (gamelogs[i] + '\n');
+   }
 };
 
 userSocket.onclose = function(e) {

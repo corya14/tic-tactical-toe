@@ -64,7 +64,7 @@ class Game(models.Model):
                 authlog.warning(
                     'User {} may not create new game. They have 5+ unfinished games.'.format(user.username))
                 return False
-        else: # game exists
+        else:  # game exists
             game = Game.objects.filter(game_name=game_name).get()
             if game.opponent is None:
                 if len(unfinished) < 5:
@@ -219,6 +219,8 @@ class Game(models.Model):
         else:
             if self.process_valid_move(backend_update):
                 self.finalize_turn()
+            self.add_log('{}: {}'.format(backend_update.user(
+            ).username, backend_update.move()), backend_update.user())
             return self.to_frontend_update()
 
     def process_valid_move(self, backend_update):
@@ -256,9 +258,13 @@ class Game(models.Model):
             for i in range(0, len(defender_d6)):
                 defender_d6[i] = secrets.randbelow(6) + 1
             attacker_d6.sort(reverse=True)
+            self.add_log('{} rolls: {}'.format(
+                backend_update.user().username, attacker_d6), backend_update.user())
             gameslog.debug('Attacker rolls by {} in game {}: {}'.format(
                 backend_update.user().username, backend_update.game_name(), attacker_d6))
             defender_d6.sort(reverse=True)
+            self.add_log('{} rolls: {}'.format(
+                dst_sq.owner.username, defender_d6), dst_sq.owner)
             gameslog.debug('Defender rolls by {} in game {}: {}'.format(
                 dst_sq.owner.username, backend_update.game_name(), defender_d6))
             for i in range(0, len(defender_d6)):
@@ -303,6 +309,9 @@ class Game(models.Model):
                     color = 'red'
                 frontend_update.set_square(
                     row=row, col=char_col, color=color, value=gamesquare.tacs)
+        # Add game log
+        for gamelog in self.get_game_log():
+            frontend_update.add_log_entry(gamelog.text)
         return frontend_update
 
     def add_log(self, text, user=None):
