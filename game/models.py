@@ -130,9 +130,20 @@ class Game(models.Model):
         return self.creator == user or self.opponent == user
 
     def is_valid_move(self, backend_update):
+
+        if self.opponent is None or self.creator is None:
+            gameslog.warning(
+                "Invalid move: {} - Game {} isn't ready yet".format(backend_update.move(), backend_update.game_name()))
+            return False
+
         if not VERIFY_REGEX.match(backend_update.move()):
             gameslog.warning(
                 'Invalid move: {} - Did not pass regex'.format(backend_update.move()))
+            return False
+
+        if not self.current_turn == backend_update.user():
+            gameslog.warning(
+                'Invalid move: {} - Out of turn'.format(backend_update.move()))
             return False
 
         src_sq = backend_update.src()
@@ -171,6 +182,7 @@ class Game(models.Model):
             return frontend_update
         else:
             backend_update.src().process(backend_update)
+            self.finalize_turn()
             return self.to_frontend_update()
 
     def to_frontend_update(self):
@@ -240,10 +252,12 @@ class Game(models.Model):
         """
         return GameLog.objects.filter(game=self)
 
-    def next_player_turn(self):
+    def finalize_turn(self):
         """
         Sets the next player's turn
         """
+        for gamesquare in GameSquare.objects.filter(game=self, owner=self.current_turn):
+            gamesquare.set_tacs(gamesquare.tacs + 1)
         self.current_turn = self.creator if self.current_turn != self.creator else self.opponent
         self.save()
 
