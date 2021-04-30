@@ -24,10 +24,11 @@ def update_gameboard(channel_layer, game_name, frontend_update):
     async_to_sync(channel_layer.group_send)(
         game_name,
         {
-            "type": "front_end_update",
+            "type": "frontend_update",
             "text": frontend_update.serialize(),
         },
     )
+
 
 class UserGameBoardSocketConsumer(WebsocketConsumer):
     """
@@ -56,7 +57,7 @@ class UserGameBoardSocketConsumer(WebsocketConsumer):
                 self.user, self.game_name)
             if frontend_update is not None:
                 update_gameboard(self.channel_layer,
-                                self.game_name, frontend_update)
+                                 self.game_name, frontend_update)
         else:
             authlog.warning('Unauthorized user {} attempted to connect a socket to game {}'.format(
                 self.user.username, self.game_name))
@@ -71,7 +72,7 @@ class UserGameBoardSocketConsumer(WebsocketConsumer):
         """Ignore any client->server comms for this socket"""
         return
 
-    def front_end_update(self, event):
+    def frontend_update(self, event):
         self.send(text_data=event["text"])
 
 
@@ -115,9 +116,9 @@ class UserGameRoomSocketConsumer(WebsocketConsumer):
             frontend_update = GameModelInterface.give_update(backend_update)
             if frontend_update is not None:
                 update_gameboard(self.channel_layer,
-                                    self.game_name, frontend_update)
+                                 self.game_name, frontend_update)
 
-    def front_end_update(self, event):
+    def frontend_update(self, event):
         self.send(text_data=event["text"])
 
 

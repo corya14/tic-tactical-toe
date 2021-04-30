@@ -10,8 +10,17 @@ const userSocket = new WebSocket(
 );
 
 userSocket.onmessage = function(e) {
+   console.log(e.data)
    const data = JSON.parse(e.data);
-   const gameboard = Object.keys(data.gameboard).sort().map(item => data.gameboard[item]);
+   const player1 = data.player1
+   document.querySelector('#player1').innerHTML = player1
+   const player2 = data.player2
+   document.querySelector('#player2').innerHTML = player2
+   const current_turn = data.current_turn
+   const cur_turn_ele = `#${current_turn}`
+   document.querySelector('#player1').style.backgroundColor = ''
+   document.querySelector('#player2').style.backgroundColor = ''
+   document.querySelector(cur_turn_ele).style.backgroundColor = 'yellow'
 };
 
 userSocket.onclose = function(e) {

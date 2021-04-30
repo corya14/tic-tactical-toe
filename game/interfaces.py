@@ -83,6 +83,9 @@ class FrontEndUpdate():
 
     def __init__(self):
         self.data_dict = {}
+        self.data_dict["player1"] = ''
+        self.data_dict["player2"] = ''
+        self.data_dict["current_turn"] = 'player1'
         self.data_dict["gameboard"] = {}
         self.gameboard = self.data_dict["gameboard"]
         self.data_dict["status"] = ""
@@ -118,6 +121,18 @@ class FrontEndUpdate():
 
     def set_status(self, status):
         self.status = status
+
+    def set_player1(self, player1):
+        self.data_dict["player1"] = player1
+
+    def set_player2(self, player2):
+        self.data_dict["player2"] = player2
+
+    def set_current_turn_creator(self):
+        self.data_dict["current_turn"] = 'player1'
+
+    def set_current_turn_opponent(self):
+        self.data_dict["current_turn"] = 'player2'
 
     def init_square(self, row, col):
         id = FrontEndUpdate.get_square_id(row, col)

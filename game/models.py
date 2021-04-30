@@ -176,6 +176,14 @@ class Game(models.Model):
     def to_frontend_update(self):
         from game.interfaces import FrontEndUpdate
         frontend_update = FrontEndUpdate()
+        if self.creator is not None:
+            if self.current_turn == self.creator:
+                frontend_update.set_current_turn_creator()
+            frontend_update.set_player1(self.creator.username)
+        if self.opponent is not None:
+            if self.current_turn == self.opponent:
+                frontend_update.set_current_turn_opponent()
+            frontend_update.set_player2(self.opponent.username)
         for row in range(1, 6):
             for col in range(1, 6):
                 char_col = FrontEndUpdate.int_col_to_char(col)
