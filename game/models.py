@@ -160,6 +160,12 @@ class Game(models.Model):
                 "Invalid move: {} - Source has no tacs".format(backend_update.move()))
             return False
 
+        # Make sure player isn't trying to move too many tacs
+        if src_sq.tacs < backend_update.tacs():
+            gameslog.warning(
+                "Invalid move: {} - Source doesn't have enough tacs".format(backend_update.move()))
+            return False
+
         dst_sq = backend_update.dst()
 
         # Make sure dst square is adjacent
