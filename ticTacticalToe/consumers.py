@@ -8,6 +8,28 @@ authlog = logging.getLogger('auth')
 generallog = logging.getLogger('general')
 
 
+def update_game_lobby(channel_layer):
+    async_to_sync(channel_layer.group_send)(
+        'lobby',
+        {
+            "type": "lobby_update",
+            "text": json.dumps(GameModelInterface.get_lobby_games()),
+        },
+    )
+
+
+def update_gameboard(channel_layer, game_name, frontend_update):
+    """Broadcast update to the gameboard for game_name
+    """
+    async_to_sync(channel_layer.group_send)(
+        game_name,
+        {
+            "type": "frontend_update",
+            "text": frontend_update.serialize(),
+        },
+    )
+
+
 class UserGameBoardSocketConsumer(WebsocketConsumer):
     """
     Socket consumer for updating the gameboard ONLY
@@ -29,15 +51,13 @@ class UserGameBoardSocketConsumer(WebsocketConsumer):
                 self.game_name, self.channel_name)
             self.accept()
             GameModelInterface.create_or_rejoin_game(self.user, self.game_name)
+            generallog.info('Updating lobby')
+            update_game_lobby(self.channel_layer)
             frontend_update = GameModelInterface.get_current_game_state(
                 self.user, self.game_name)
-            async_to_sync(self.channel_layer.group_send)(
-                self.game_name,
-                {
-                    "type": "front_end_update",
-                    "text": frontend_update.serialize(),
-                },
-            )
+            if frontend_update is not None:
+                update_gameboard(self.channel_layer,
+                                 self.game_name, frontend_update)
         else:
             authlog.warning('Unauthorized user {} attempted to connect a socket to game {}'.format(
                 self.user.username, self.game_name))
@@ -52,7 +72,7 @@ class UserGameBoardSocketConsumer(WebsocketConsumer):
         """Ignore any client->server comms for this socket"""
         return
 
-    def front_end_update(self, event):
+    def frontend_update(self, event):
         self.send(text_data=event["text"])
 
 
@@ -90,20 +110,15 @@ class UserGameRoomSocketConsumer(WebsocketConsumer):
     def receive(self, text_data):
         if self.user.is_authenticated:
             text_data_json = json.loads(text_data)
-            game = text_data_json['game']
+            game_name = text_data_json['game']
             move = text_data_json['move']
-            backend_update = BackEndUpdate(self.user.username, game, move)
+            backend_update = BackEndUpdate(self.user, game_name, move)
             frontend_update = GameModelInterface.give_update(backend_update)
+            if frontend_update is not None:
+                update_gameboard(self.channel_layer,
+                                 self.game_name, frontend_update)
 
-            async_to_sync(self.channel_layer.group_send)(
-                self.game_name,
-                {
-                    "type": "front_end_update",
-                    "text": frontend_update.serialize(),
-                },
-            )
-
-    def front_end_update(self, event):
+    def frontend_update(self, event):
         self.send(text_data=event["text"])
 
 
@@ -132,3 +147,6 @@ class UserGameLobbyConsumer(WebsocketConsumer):
     def receive(self, text_data):
         """Ignore any client->server comms for this socket"""
         return
+
+    def lobby_update(self, event):
+        self.send(text_data=event["text"])

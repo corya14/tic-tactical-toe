@@ -1,10 +1,13 @@
 # t-t-t
 Tic Tactical Toe. Grid-based game with Django.
 
-# Common Commands
+# manage.py Commands
+All commands are preceeded by `python manage.py`
 | Purpose | Command |
 | ------- | ------- |
-| Reset games DB | `python manage.py migrate game zero`
+| Reset games DB | `migrate game zero`
+| Reload/restore DB | `migrate`
+| Run server | `runserver`
 
 # Local Insecure Dev/Test Run Instructions
 Recommended to create a python virtual environment with:

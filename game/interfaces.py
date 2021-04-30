@@ -2,31 +2,75 @@ import json
 from game.models import Game
 from game.models import GameSquare
 
-# Encapculates an update to the back end
+import logging
+gameslog = logging.getLogger('games')
+
+cols = {}
+cols['a'] = 1
+cols['b'] = 2
+cols['c'] = 3
+cols['d'] = 4
+cols['e'] = 5
 
 
 class BackEndUpdate():
-    def __init__(self, user, game, move):
+    """Encapculates an update to the back end
+    """
+
+    def __init__(self, user, game_name, move):
         self._user = user
-        self._game = game
+        self._game_name = game_name
         self._move = move
+        self._src_sq = self._set_src_square()
+        self._dst_sq = self._set_dst_square()
+        self._num_tacs = self._set_num_tacs()
 
     def user(self):
         return self._user
 
-    def game(self):
-        return self._game
+    def game_name(self):
+        return self._game_name
 
     def move(self):
         return self._move
 
-    def __str__(self):
-        return "BackEndUpdate{{USER[{}]GAME[{}]MOVE[{}]}}".format(self._user, self._game, self._move)
+    def src(self):
+        return self._src_sq
 
-# Encapsulates an update to the front end
+    def dst(self):
+        return self._dst_sq
+
+    def tacs(self):
+        return self._num_tacs
+
+    def _set_src_square(self):
+        game = Game.objects.filter(game_name=self._game_name).get()
+        # (1)(a1,a1)
+        #     ^^
+        src_str = self._move.split('|')[1][1:3]
+        col = cols[src_str[0]]
+        row = src_str[1]
+        return game.get_game_square(row, col)
+
+    def _set_dst_square(self):
+        game = Game.objects.filter(game_name=self._game_name).get()
+        # (1)(a1,a1)
+        #        ^^
+        dst_str = self._move.split('|')[1][4:6]
+        col = cols[dst_str[0]]
+        row = dst_str[1]
+        return game.get_game_square(row, col)
+
+    def _set_num_tacs(self):
+        return int(self._move.split('|')[0].replace('(', '').replace(')', ''))
+
+    def __str__(self):
+        return "BackEndUpdate{{USER[{}]GAME[{}]MOVE[{}]}}".format(self._user, self._game_name, self._move)
 
 
 class FrontEndUpdate():
+    """ Encapsulates an update to the front end
+    """
 
     @staticmethod
     def square_dict(id, color='white', value=0):
@@ -39,6 +83,9 @@ class FrontEndUpdate():
 
     def __init__(self):
         self.data_dict = {}
+        self.data_dict["player1"] = ''
+        self.data_dict["player2"] = ''
+        self.data_dict["current_turn"] = 'player1'
         self.data_dict["gameboard"] = {}
         self.gameboard = self.data_dict["gameboard"]
         self.data_dict["status"] = ""
@@ -59,12 +106,33 @@ class FrontEndUpdate():
 
     @staticmethod
     def int_col_to_char(col):
-        if col == 1: return 'a'
-        elif col == 2: return 'b'
-        elif col == 3: return 'c'
-        elif col == 4: return 'd'
-        elif col == 5: return 'e'
-        else: return None
+        if col == 1:
+            return 'a'
+        elif col == 2:
+            return 'b'
+        elif col == 3:
+            return 'c'
+        elif col == 4:
+            return 'd'
+        elif col == 5:
+            return 'e'
+        else:
+            return None
+
+    def set_status(self, status):
+        self.status = status
+
+    def set_player1(self, player1):
+        self.data_dict["player1"] = player1
+
+    def set_player2(self, player2):
+        self.data_dict["player2"] = player2
+
+    def set_current_turn_creator(self):
+        self.data_dict["current_turn"] = 'player1'
+
+    def set_current_turn_opponent(self):
+        self.data_dict["current_turn"] = 'player2'
 
     def init_square(self, row, col):
         id = FrontEndUpdate.get_square_id(row, col)
@@ -89,8 +157,9 @@ class FrontEndUpdate():
     def serialize(self):
         return json.dumps(self.data_dict)
 
-
 # Define an object adapter for interactions with game model
+
+
 class GameModelInterface():
     @staticmethod
     def user_is_authenticated_to_game(user, game_name) -> bool:
@@ -107,57 +176,41 @@ class GameModelInterface():
 
     @staticmethod
     def game_to_frontend_update(game) -> FrontEndUpdate:
-        frontend_update = FrontEndUpdate()
-        for row in range(1, 6):
-            for col in range(1, 6):
-                char_col = FrontEndUpdate.int_col_to_char(col)
-                gamesquare = GameSquare.objects.filter(
-                    game=game, row=row, col=col).get()
-                if gamesquare.owner == None:
-                    color = 'white'
-                elif gamesquare.owner == game.creator:
-                    color = 'cyan'
-                else:
-                    color = 'red'
-                frontend_update.set_square(
-                    row=row, col=char_col, color=color, value=gamesquare.tacs)
-        return frontend_update
+        return game.to_frontend_update()
 
     @staticmethod
     def get_current_game_state(user, game_name) -> FrontEndUpdate:
-        # TODO: Get front end update from model
         game = Game.objects.filter(game_name=game_name)
         return GameModelInterface.game_to_frontend_update(game.get())
 
     @staticmethod
     def give_update(backend_update) -> FrontEndUpdate:
-        """
-        Accept move_str from user for given game (str name of game)
-        Should check:
-           Is the user auth'd to this game?
-           Is it the users turn?
-           Is the move valid?
-        Then:
-           Update the state of the game
-           Change active turn
-        Finally:
-           yield FrontEndUpdate with applicable status
-        """
-        print(str(backend_update))
-        # TODO: replace me with proper front end update
-        update = FrontEndUpdate()
-        update.set_square(1, 'b', 'red', 1)
-        update.set_square(1, 'd', 'red', 3)
-        update.set_square(1, 'd', 'red', 3)
-        update.set_square(4, 'b', 'cyan', 1)
-        update.set_square(4, 'c', 'cyan', 2)
-        update.set_square(4, 'd', 'cyan', 3)
-        return update
+        # Some basic top level checks before update even gets to game
+        try:
+            game = Game.objects.filter(
+                game_name=backend_update.game_name()).get()
+        except:
+            gameslog.warning(
+                'Problem finding game {}'.format(backend_update.game_name()))
+            return
+        if not game.is_associated_with_user(backend_update.user()):
+            gameslog.warning('Game {} is not associated with user {}'.format(
+                backend_update.game_name(), backend_update.user().username))
+            return
+        elif not game.is_ready_to_play():
+            gameslog.warning(
+                'Game {} is not ready to play'.format(backend_update.game_name()))
+            return
+        else:
+            # User is part of game and game is ready to play
+            gameslog.info('Received update for game {}'.format(
+                backend_update.game_name()))
+            frontend_update = game.update(backend_update)
+            return frontend_update
 
     @staticmethod
     def get_lobby_games():
         """ Return list of games that need another player """
         avail_games = Game.get_available_games()
         avail_games_list = [x.game_name for x in avail_games]
-        print(avail_games_list)
         return avail_games_list

@@ -2,6 +2,17 @@ from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models import UniqueConstraint
+import re
+import secrets
+from datetime import datetime
+
+import logging
+gameslog = logging.getLogger('games')
+authlog = logging.getLogger('auth')
+
+
+# Move verification regex
+VERIFY_REGEX = re.compile(r'^\([1-9]\)|\([a-e][1-5],[a-e][1-5]\)$')
 
 # Create your models here.
 
@@ -34,19 +45,29 @@ class Game(models.Model):
         return Game.objects.filter(game_name=name).count() > 0
 
     @staticmethod
-    def user_may_join_or_play_game(username, game_name):
+    def user_may_join_or_play_game(user, game_name):
         if not Game.exists(game_name):
             # Game DNE, user may create
+            authlog.info(
+                'User {} may join game {} - Game is new'.format(user.username, game_name))
             return True
         else:
             game = Game.objects.filter(game_name=game_name).get()
             if game.opponent is None:
+                authlog.info(
+                    'User {} may join game {} - Game has no opponent yet'.format(user.username, game_name))
                 return True
-            elif game.opponent.username == username:
+            elif game.opponent == user:
+                authlog.info(
+                    'User {} may join game {} - User is game opponent'.format(user.username, game_name))
                 return True
-            elif game.creator.username == username:
+            elif game.creator == user:
+                authlog.info(
+                    'User {} may join game {} - User is game creator'.format(user.username, game_name))
                 return True
             else:
+                authlog.info('User {} may not join game {}'.format(
+                    user.username, game_name))
                 return False
 
     @staticmethod
@@ -104,6 +125,169 @@ class Game(models.Model):
 
         return new_game
 
+    def is_ready_to_play(self):
+        return self.creator != None and self.opponent != None
+
+    def is_associated_with_user(self, user):
+        return self.creator == user or self.opponent == user
+
+    def is_valid_move(self, backend_update):
+
+        if self.opponent is None or self.creator is None:
+            gameslog.warning(
+                "Invalid move: {} - Game {} isn't ready yet".format(backend_update.move(), backend_update.game_name()))
+            return False
+
+        if self.completed is not None:
+            gameslog.warning(
+                "Invalid move: {} - Game {} is completed".format(backend_update.move(), backend_update.game_name()))
+            return False
+
+        if not VERIFY_REGEX.match(backend_update.move()):
+            gameslog.warning(
+                'Invalid move: {} - Did not pass regex'.format(backend_update.move()))
+            return False
+
+        if not self.current_turn == backend_update.user():
+            gameslog.warning(
+                'Invalid move: {} - Out of turn'.format(backend_update.move()))
+            return False
+
+        src_sq = backend_update.src()
+
+        # check if user owns source square
+        if not src_sq.owner == backend_update.user():
+            gameslog.warning(
+                "Invalid move: {} - User doesn't own src square".format(backend_update.move()))
+            return False
+
+        # Make sure source square has tacs
+        if not src_sq.tacs > 0:
+            gameslog.warning(
+                "Invalid move: {} - Source has no tacs".format(backend_update.move()))
+            return False
+
+        # Make sure player isn't trying to move too many tacs
+        if src_sq.tacs < backend_update.tacs():
+            gameslog.warning(
+                "Invalid move: {} - Source doesn't have enough tacs".format(backend_update.move()))
+            return False
+
+        dst_sq = backend_update.dst()
+
+        # Avoid having more than 9 tacs in a square
+        if dst_sq.owner == src_sq.owner and backend_update.tacs() + dst_sq.tacs > 9:
+            gameslog.warning(
+                "Invalid move: {} - Destination would have too many tacs".format(backend_update.move()))
+            return False
+
+        # Make sure dst square is adjacent
+        row_delta = abs(src_sq.row - dst_sq.row)
+        col_delta = abs(src_sq.col - dst_sq.col)
+        if row_delta + col_delta > 1:
+            gameslog.warning(
+                "Invalid move: {} - Dest not adjacent to source".format(backend_update.move()))
+            return False
+
+        return True
+
+    def update(self, backend_update):
+        if not self.is_valid_move(backend_update):
+            gameslog.debug("User {} attempted invalid move {} in game {}".format(
+                backend_update.user().username, backend_update.move(), backend_update.game_name()))
+            frontend_update = self.to_frontend_update()
+            frontend_update.set_status(
+                'Invalid move: {}'.format(backend_update.move()))
+            return frontend_update
+        else:
+            if self.process_valid_move(backend_update):
+                self.finalize_turn()
+            return self.to_frontend_update()
+
+    def process_valid_move(self, backend_update):
+        src_sq = backend_update.src()
+        dst_sq = backend_update.dst()
+        tacs = backend_update.tacs()
+        if dst_sq.owner == None:
+            gameslog.debug('Processing invading move {}'.format(
+                backend_update.move()))
+            src_sq.delta_tacs(-1 * tacs)
+            dst_sq.claim(backend_update.user(), tacs)
+            return True
+        elif src_sq == dst_sq:
+            src_sq.set_tacs(min(9, src_sq.tacs + 2))
+            return True
+        elif dst_sq.owner == backend_update.user():
+            gameslog.debug('Processing internal move {}'.format(
+                backend_update.move()))
+            src_sq.delta_tacs(-1 * tacs)
+            dst_sq.delta_tacs(tacs)
+            return True
+        else:
+            gameslog.debug('Processing conflict move {}'.format(
+                backend_update.move()))
+            attacking = tacs
+            atk_loss = 0
+            defending = dst_sq.tacs
+            def_loss = 0
+            gameslog.debug('{} attacking {} in game {}, {} vs {} tacs'.format(
+                src_sq.owner.username, dst_sq.owner.username, backend_update.game_name(), attacking, defending))
+            attacker_d6 = [x for x in range(0, min(3, attacking))]
+            defender_d6 = [x for x in range(0, min(2, defending))]
+            for i in range(0, len(attacker_d6)):
+                attacker_d6[i] = secrets.randbelow(6) + 1
+            for i in range(0, len(defender_d6)):
+                defender_d6[i] = secrets.randbelow(6) + 1
+            attacker_d6.sort(reverse=True)
+            gameslog.debug('Attacker rolls by {} in game {}: {}'.format(
+                backend_update.user().username, backend_update.game_name(), attacker_d6))
+            defender_d6.sort(reverse=True)
+            gameslog.debug('Defender rolls by {} in game {}: {}'.format(
+                dst_sq.owner.username, backend_update.game_name(), defender_d6))
+            for i in range(0, len(defender_d6)):
+                if attacker_d6[i] > defender_d6[i]:
+                    defending -= 1
+                    def_loss += 1
+                    if defending == 0:
+                        break
+                else:
+                    attacking -= 1
+                    atk_loss += 1
+            if defending == 0:
+                dst_sq.claim(backend_update.user(), attacking)
+                src_sq.delta_tacs(-1 * attacking)
+                return True  # end turn
+            else:
+                src_sq.delta_tacs(-1 * atk_loss)
+                dst_sq.delta_tacs(-1 * def_loss)
+                return False
+
+    def to_frontend_update(self):
+        from game.interfaces import FrontEndUpdate
+        frontend_update = FrontEndUpdate()
+        if self.creator is not None:
+            if self.current_turn == self.creator:
+                frontend_update.set_current_turn_creator()
+            frontend_update.set_player1(self.creator.username)
+        if self.opponent is not None:
+            if self.current_turn == self.opponent:
+                frontend_update.set_current_turn_opponent()
+            frontend_update.set_player2(self.opponent.username)
+        for row in range(1, 6):
+            for col in range(1, 6):
+                char_col = FrontEndUpdate.int_col_to_char(col)
+                gamesquare = GameSquare.objects.filter(
+                    game=self, row=row, col=col).get()
+                if gamesquare.owner == None:
+                    color = 'white'
+                elif gamesquare.owner == self.creator:
+                    color = 'cyan'
+                else:
+                    color = 'red'
+                frontend_update.set_square(
+                    row=row, col=char_col, color=color, value=gamesquare.tacs)
+        return frontend_update
+
     def add_log(self, text, user=None):
         """
         Adds a text log associated with this game.
@@ -145,33 +329,19 @@ class Game(models.Model):
         """
         return GameLog.objects.filter(game=self)
 
-    def send_game_update(self):
-        """
-        Send the updated game information and squares to the game's channel group
-        """
-        # imported here to avoid circular import
-        from .serializers import GameSquareSerializer, GameLogSerializer, GameSerializer
-
-        squares = self.get_all_game_squares()
-        square_serializer = GameSquareSerializer(squares, many=True)
-
-        # get game log
-        log = self.get_game_log()
-        log_serializer = GameLogSerializer(log, many=True)
-
-        game_serilizer = GameSerializer(self)
-
-        message = {'game': game_serilizer.data,
-                   'log': log_serializer.data,
-                   'squares': square_serializer.data}
-
-        game_group = 'game-{0}'.format(self.id)
-        Group(game_group).send({'text': json.dumps(message)})
-
-    def next_player_turn(self):
+    def finalize_turn(self):
         """
         Sets the next player's turn
         """
+        if self.get_game_square(1, 3).owner == self.creator:
+            gameslog.info('{} wins!'.format(self.creator.username))
+            self.completed = datetime.now()
+        elif self.get_game_square(5, 3).owner == self.opponent:
+            gameslog.info('{} wins!'.format(self.opponent.username))
+            self.completed = datetime.now()
+        for gamesquare in GameSquare.objects.filter(game=self, owner=self.current_turn):
+            if gamesquare.tacs < 9:
+                gamesquare.delta_tacs(1)
         self.current_turn = self.creator if self.current_turn != self.creator else self.opponent
         self.save()
 
@@ -206,7 +376,7 @@ class GameSquare(models.Model):
     def __unicode__(self):
         return '{0} - ({1}, {2})[{3}]'.format(self.game, self.col, self.row, self.tacs)
 
-    @staticmethod
+    @ staticmethod
     def get(row, col, game):
         return GameSquare.objects.filter(row=row, col=col, game=game).get()
 
@@ -214,7 +384,11 @@ class GameSquare(models.Model):
         self.tacs = tacs
         self.save(update_fields=['tacs'])
 
-    @staticmethod
+    def delta_tacs(self, delta):
+        self.tacs += delta
+        self.save(update_fields=['tacs'])
+
+    @ staticmethod
     def get_by_id(id):
         try:
             return GameSquare.objects.get(pk=id)
