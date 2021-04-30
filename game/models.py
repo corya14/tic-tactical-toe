@@ -46,7 +46,6 @@ class Game(models.Model):
 
     @staticmethod
     def user_may_join_or_play_game(user, game_name):
-
         # Make sure user doesn't have a bunch of other unfinished games
         unfinished = Game.objects.filter(models.Q(completed=None) & (
             models.Q(creator=user) | models.Q(opponent=user)))
@@ -64,9 +63,13 @@ class Game(models.Model):
                 authlog.warning(
                     'User {} may not create new game. They have 5+ unfinished games.'.format(user.username))
                 return False
-        else: # game exists
+        else:  # game exists
             game = Game.objects.filter(game_name=game_name).get()
-            if game.opponent is None:
+            if game.is_complete():
+                authlog.info(
+                    'User {} may view game {} - Game completed'.format(user.username, game_name))
+                return True
+            elif game.opponent is None:
                 if len(unfinished) < 5:
                     authlog.info(
                         'User {} may join game {} - Game has no opponent yet'.format(user.username, game_name))
@@ -90,10 +93,12 @@ class Game(models.Model):
     @staticmethod
     def user_join_game(user, game_name):
         game = Game.objects.filter(game_name=game_name).get()
-        if not game.creator.username == user.username:
+        if game.opponent is None:
             game.opponent = user
             game.get_game_square(1, 3).claim(user, 2)
             game.save(update_fields=['opponent'])
+        elif game.creator.username == user.username:
+            authlog.info('Creator {} rejoining game {}'.format(user.username, game_name))
         else:
             pass  # creator may be rejoining
 
@@ -219,6 +224,8 @@ class Game(models.Model):
         else:
             if self.process_valid_move(backend_update):
                 self.finalize_turn()
+            self.add_log('{}: {}'.format(backend_update.user(
+            ).username, backend_update.move()), backend_update.user())
             return self.to_frontend_update()
 
     def process_valid_move(self, backend_update):
@@ -256,9 +263,13 @@ class Game(models.Model):
             for i in range(0, len(defender_d6)):
                 defender_d6[i] = secrets.randbelow(6) + 1
             attacker_d6.sort(reverse=True)
+            self.add_log('{} rolls: {}'.format(
+                backend_update.user().username, attacker_d6), backend_update.user())
             gameslog.debug('Attacker rolls by {} in game {}: {}'.format(
                 backend_update.user().username, backend_update.game_name(), attacker_d6))
             defender_d6.sort(reverse=True)
+            self.add_log('{} rolls: {}'.format(
+                dst_sq.owner.username, defender_d6), dst_sq.owner)
             gameslog.debug('Defender rolls by {} in game {}: {}'.format(
                 dst_sq.owner.username, backend_update.game_name(), defender_d6))
             for i in range(0, len(defender_d6)):
@@ -303,6 +314,9 @@ class Game(models.Model):
                     color = 'red'
                 frontend_update.set_square(
                     row=row, col=char_col, color=color, value=gamesquare.tacs)
+        # Add game log
+        for gamelog in self.get_game_log():
+            frontend_update.add_log_entry(gamelog.text)
         return frontend_update
 
     def add_log(self, text, user=None):
@@ -351,10 +365,10 @@ class Game(models.Model):
         Sets the next player's turn
         """
         if self.get_game_square(1, 3).owner == self.creator:
-            gameslog.info('{} wins!'.format(self.creator.username))
+            self.add_log('{} wins!'.format(self.creator.username), self.creator)
             self.completed = datetime.now()
         elif self.get_game_square(5, 3).owner == self.opponent:
-            gameslog.info('{} wins!'.format(self.opponent.username))
+            self.add_log('{} wins!'.format(self.opponent.username), self.opponent)
             self.completed = datetime.now()
         for gamesquare in GameSquare.objects.filter(game=self, owner=self.current_turn):
             if gamesquare.tacs < 9:
@@ -369,6 +383,9 @@ class Game(models.Model):
         self.winner = winner
         self.completed = datetime.now()
         self.save()
+
+    def is_complete(self):
+        return self.completed != None
 
 
 class GameSquare(models.Model):
@@ -417,13 +434,14 @@ class GameSquare(models.Model):
         """
         Claims the square for the user
         """
+        from game.interfaces import FrontEndUpdate
         self.owner = user
         self.tacs = tacs
         self.save(update_fields=['owner', 'tacs'])
 
         # add log entry for move
-        self.game.add_log('GameSquare ({0}, {1}) claimed with {2} tacs by {3}'
-                          .format(self.col, self.row, self.tacs, self.owner.username))
+        self.game.add_log('GameSquare {0}{1} claimed with {2} tacs by {3}'
+                          .format(FrontEndUpdate.int_col_to_char(self.col), self.row, self.tacs, self.owner.username))
 
 
 class GameLog(models.Model):

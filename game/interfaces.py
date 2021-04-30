@@ -91,7 +91,6 @@ class FrontEndUpdate():
         self.data_dict["status"] = ""
         self.status = self.data_dict["status"]
         self.data_dict["log"] = []
-        self.gamelog = self.data_dict["log"]
         rows = [1, 2, 3, 4, 5]
         cols = ['a', 'b', 'c', 'd', 'e']
         for row in rows:
@@ -154,10 +153,13 @@ class FrontEndUpdate():
     def set_square_value(self, row, col, value):
         self.get_square(row, col)['value'] = value
 
+    def add_log_entry(self, entry):
+        self.data_dict["log"].append(entry)
+
     def serialize(self):
         return json.dumps(self.data_dict)
 
-# Define an object adapter for interactions with game model
+# Define an adapter for interactions with game model
 
 
 class GameModelInterface():
@@ -182,6 +184,14 @@ class GameModelInterface():
     def get_current_game_state(user, game_name) -> FrontEndUpdate:
         game = Game.objects.filter(game_name=game_name)
         return GameModelInterface.game_to_frontend_update(game.get())
+
+    @staticmethod
+    def is_game_complete(game_name) -> bool:
+        if Game.exists(game_name):
+            game = Game.objects.filter(game_name=game_name).get()
+            return game.is_complete()
+        else:
+            return False
 
     @staticmethod
     def give_update(backend_update) -> FrontEndUpdate:

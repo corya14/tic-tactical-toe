@@ -20,6 +20,14 @@ def lobby(request):
 
 def gameroom(request, game_name):
     if request.user.is_authenticated:
+        # test to see if game exists and is completed
+        if GameModelInterface.is_game_complete(game_name):
+            # Any user may see the final state of the game
+            return render(request, 'game/gameroom.html', {
+                'game_name': game_name,
+                'requesting_user': request.user.username
+            })
+
         if VERIFY_REGEX.match(game_name):
             if GameModelInterface.user_is_authenticated_to_game(request.user, game_name):
                 return render(request, 'game/gameroom.html', {
