@@ -365,16 +365,15 @@ class Game(models.Model):
         Sets the next player's turn
         """
         if self.get_game_square(1, 3).owner == self.creator:
-            self.add_log('{} wins!'.format(self.creator.username), self.creator)
-            self.completed = datetime.now()
+            self.mark_complete(self.creator)
         elif self.get_game_square(5, 3).owner == self.opponent:
-            self.add_log('{} wins!'.format(self.opponent.username), self.opponent)
-            self.completed = datetime.now()
-        for gamesquare in GameSquare.objects.filter(game=self, owner=self.current_turn):
-            if gamesquare.tacs < 9:
-                gamesquare.delta_tacs(1)
-        self.current_turn = self.creator if self.current_turn != self.creator else self.opponent
-        self.save()
+            self.mark_complete(self.opponent)
+        else:
+            for gamesquare in GameSquare.objects.filter(game=self, owner=self.current_turn):
+                if gamesquare.tacs < 9:
+                    gamesquare.delta_tacs(1)
+            self.current_turn = self.creator if self.current_turn != self.creator else self.opponent
+            self.save()
 
     def mark_complete(self, winner):
         """
@@ -382,6 +381,7 @@ class Game(models.Model):
         """
         self.winner = winner
         self.completed = datetime.now()
+        self.add_log('{} wins!'.format(winner.username), winner)
         self.save()
 
     def is_complete(self):
