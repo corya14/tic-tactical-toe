@@ -365,10 +365,10 @@ class Game(models.Model):
         Sets the next player's turn
         """
         if self.get_game_square(1, 3).owner == self.creator:
-            gameslog.info('{} wins!'.format(self.creator.username))
+            self.add_log('{} wins!'.format(self.creator.username), self.creator)
             self.completed = datetime.now()
         elif self.get_game_square(5, 3).owner == self.opponent:
-            gameslog.info('{} wins!'.format(self.opponent.username))
+            self.add_log('{} wins!'.format(self.opponent.username), self.opponent)
             self.completed = datetime.now()
         for gamesquare in GameSquare.objects.filter(game=self, owner=self.current_turn):
             if gamesquare.tacs < 9:
