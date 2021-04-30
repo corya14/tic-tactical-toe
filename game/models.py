@@ -169,6 +169,7 @@ class Game(models.Model):
 
         dst_sq = backend_update.dst()
 
+        # Avoid having more than 9 tacs in a square
         if dst_sq.owner == src_sq.owner and backend_update.tacs() + dst_sq.tacs > 9:
             gameslog.warning(
                 "Invalid move: {} - Destination would have too many tacs".format(backend_update.move()))
@@ -204,21 +205,25 @@ class Game(models.Model):
         if dst_sq.owner == None:
             gameslog.debug('Processing invading move {}'.format(
                 backend_update.move()))
-            dst_sq.claim(backend_update.user(), backend_update.tacs())
+            src_sq.delta_tacs(-1 * tacs)
+            dst_sq.claim(backend_update.user(), tacs)
             return True
         elif src_sq == dst_sq:
-            src_sq.set_tacs(max(9, src_sq.tacs() + 2))
+            src_sq.set_tacs(min(9, src_sq.tacs + 2))
+            return True
         elif dst_sq.owner == backend_update.user():
             gameslog.debug('Processing internal move {}'.format(
                 backend_update.move()))
-            src_sq.set_tacs(src_sq.tacs - tacs)
-            dst_sq.set_tacs(dst_sq.tacs + tacs)
+            src_sq.delta_tacs(-1 * tacs)
+            dst_sq.delta_tacs(tacs)
             return True
         else:
             gameslog.debug('Processing conflict move {}'.format(
                 backend_update.move()))
             attacking = tacs
+            atk_loss = 0
             defending = dst_sq.tacs
+            def_loss = 0
             gameslog.debug('{} attacking {} in game {}, {} vs {} tacs'.format(
                 src_sq.owner.username, dst_sq.owner.username, backend_update.game_name(), attacking, defending))
             attacker_d6 = [x for x in range(0, min(3, attacking))]
@@ -232,20 +237,23 @@ class Game(models.Model):
                 backend_update.user().username, backend_update.game_name(), attacker_d6))
             defender_d6.sort(reverse=True)
             gameslog.debug('Defender rolls by {} in game {}: {}'.format(
-                backend_update.user().username, backend_update.game_name(), defender_d6))
+                backend_update.user().username, dst_sq.owner.username, defender_d6))
             for i in range(0, len(defender_d6)):
                 if attacker_d6[i] > defender_d6[i]:
                     defending -= 1
+                    def_loss += 1
                     if defending == 0:
                         break
                 else:
                     attacking -= 1
+                    atk_loss += 1
             if defending == 0:
                 dst_sq.claim(backend_update.user(), attacking)
+                src_sq.delta_tacs(-1 * attacking)
                 return True  # end turn
             else:
-                src_sq.set_tacs(attacking)
-                dst_sq.set_tacs(defending)
+                src_sq.delta_tacs(-1 * atk_loss)
+                dst_sq.delta_tacs(-1 * def_loss)
                 return False
 
     def to_frontend_update(self):
@@ -321,7 +329,7 @@ class Game(models.Model):
         """
         for gamesquare in GameSquare.objects.filter(game=self, owner=self.current_turn):
             if gamesquare.tacs < 9:
-                gamesquare.set_tacs(gamesquare.tacs + 1)
+                gamesquare.delta_tacs(1)
         self.current_turn = self.creator if self.current_turn != self.creator else self.opponent
         self.save()
 
@@ -362,6 +370,10 @@ class GameSquare(models.Model):
 
     def set_tacs(self, tacs):
         self.tacs = tacs
+        self.save(update_fields=['tacs'])
+
+    def delta_tacs(self,delta):
+        self.tacs += delta
         self.save(update_fields=['tacs'])
 
     @ staticmethod
