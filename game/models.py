@@ -46,7 +46,6 @@ class Game(models.Model):
 
     @staticmethod
     def user_may_join_or_play_game(user, game_name):
-
         # Make sure user doesn't have a bunch of other unfinished games
         unfinished = Game.objects.filter(models.Q(completed=None) & (
             models.Q(creator=user) | models.Q(opponent=user)))
@@ -66,7 +65,11 @@ class Game(models.Model):
                 return False
         else:  # game exists
             game = Game.objects.filter(game_name=game_name).get()
-            if game.opponent is None:
+            if game.is_complete():
+                authlog.info(
+                    'User {} may view game {} - Game completed'.format(user.username, game_name))
+                return True
+            elif game.opponent is None:
                 if len(unfinished) < 5:
                     authlog.info(
                         'User {} may join game {} - Game has no opponent yet'.format(user.username, game_name))
@@ -90,10 +93,12 @@ class Game(models.Model):
     @staticmethod
     def user_join_game(user, game_name):
         game = Game.objects.filter(game_name=game_name).get()
-        if not game.creator.username == user.username:
+        if game.opponent is None:
             game.opponent = user
             game.get_game_square(1, 3).claim(user, 2)
             game.save(update_fields=['opponent'])
+        elif game.creator.username == user.username:
+            authlog.info('Creator {} rejoining game {}'.format(user.username, game_name))
         else:
             pass  # creator may be rejoining
 
@@ -378,6 +383,9 @@ class Game(models.Model):
         self.winner = winner
         self.completed = datetime.now()
         self.save()
+
+    def is_complete(self):
+        return self.completed != None
 
 
 class GameSquare(models.Model):

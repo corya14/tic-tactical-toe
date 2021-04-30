@@ -186,6 +186,14 @@ class GameModelInterface():
         return GameModelInterface.game_to_frontend_update(game.get())
 
     @staticmethod
+    def is_game_complete(game_name) -> bool:
+        if Game.exists(game_name):
+            game = Game.objects.filter(game_name=game_name).get()
+            return game.is_complete()
+        else:
+            return False
+
+    @staticmethod
     def give_update(backend_update) -> FrontEndUpdate:
         # Some basic top level checks before update even gets to game
         try:
