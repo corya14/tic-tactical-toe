@@ -11,13 +11,25 @@ All commands are preceeded by `python manage.py`
 
 # Local Insecure Dev/Test Run Instructions
 Recommended to create a python virtual environment with:
-`python3 -m venv ttt`
+```sh
+python3 -m venv ttt
+```
 
 Activate the venv and install dependencies:
-`pip install -r requirements.txt`
+```sh
+pip install -r requirements.txt
+```
+
+DB Setup:
+```sh
+python3 manage.py makemigrations
+python3 manage.py migrate
+```
 
 To start the Django server:
-`python manage.py runserver`
+```sh
+python manage.py runserver
+```
 
 ## Generating Self-Signed Certs
 
@@ -30,11 +42,14 @@ openssl req -x509 -out localhost-TEST.crt -keyout localhost-TEST.key \
 
 # Test Secure Deployment
 This requires the files `localhost-TEST.crt` and `localhost-TEST.key` to exist locally.
-`docker build --tag ttt:latest .`
-`docker run -it -d --name ttt -p 4443:443 ttt`
+```sh
+docker build --tag ttt:latest .
+docker run -it -d --name ttt -p 4443:443 ttt
+```
 
 Navigate to `https://localhost:4443`. Recommended browser: Chrome (accepts self signed root certs)
 
 # Credits
  * https://learndjango.com/tutorials/
  * https://channels.readthedocs.io/
+ * https://github.com/codyparker/channels-obstruction
