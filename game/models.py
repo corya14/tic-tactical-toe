@@ -46,17 +46,34 @@ class Game(models.Model):
 
     @staticmethod
     def user_may_join_or_play_game(user, game_name):
-        if not Game.exists(game_name):
-            # Game DNE, user may create
+
+        # Make sure user doesn't have a bunch of other unfinished games
+        unfinished = Game.objects.filter(models.Q(completed=None) & (
+            models.Q(creator=user) | models.Q(opponent=user)))
+        if len(unfinished) >= 5:
             authlog.info(
-                'User {} may join game {} - Game is new'.format(user.username, game_name))
-            return True
-        else:
+                'Restricting user {} game creations. They have 5+ unfinished games.'.format(user.username))
+
+        if not Game.exists(game_name):
+            if len(unfinished) < 5:
+                # Game DNE, user may create
+                authlog.info(
+                    'User {} may join game {} - Game is new'.format(user.username, game_name))
+                return True
+            else:
+                authlog.warning(
+                    'User {} may not create new game. They have 5+ unfinished games.'.format(user.username))
+                return False
+        else: # game exists
             game = Game.objects.filter(game_name=game_name).get()
             if game.opponent is None:
-                authlog.info(
-                    'User {} may join game {} - Game has no opponent yet'.format(user.username, game_name))
-                return True
+                if len(unfinished) < 5:
+                    authlog.info(
+                        'User {} may join game {} - Game has no opponent yet'.format(user.username, game_name))
+                    return True
+                else:
+                    authlog.warning(
+                        'User {} may not join new game. They have 5+ unfinished games.'.format(user.username))
             elif game.opponent == user:
                 authlog.info(
                     'User {} may join game {} - User is game opponent'.format(user.username, game_name))

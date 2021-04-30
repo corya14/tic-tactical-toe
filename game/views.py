@@ -29,7 +29,7 @@ def gameroom(request, game_name):
             else:
                 authlog.warning('User {} failed to authenticate to game {}'.format(
                     request.user.username, game_name))
-                messages.error(request, "Invalid game name. Please try again.")
+                messages.error(request, "Not allowed to join that game. Please try again.")
                 return redirect('lobby')
         else:
             authlog.debug('User {} tried to create a game with an invalid name.'.format(
