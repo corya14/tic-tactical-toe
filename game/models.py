@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.db.models import UniqueConstraint
 import re
 import secrets
+from datetime import datetime
 
 import logging
 gameslog = logging.getLogger('games')
@@ -137,6 +138,11 @@ class Game(models.Model):
                 "Invalid move: {} - Game {} isn't ready yet".format(backend_update.move(), backend_update.game_name()))
             return False
 
+        if self.completed is not None:
+            gameslog.warning(
+                "Invalid move: {} - Game {} is completed".format(backend_update.move(), backend_update.game_name()))
+            return False
+
         if not VERIFY_REGEX.match(backend_update.move()):
             gameslog.warning(
                 'Invalid move: {} - Did not pass regex'.format(backend_update.move()))
@@ -237,7 +243,7 @@ class Game(models.Model):
                 backend_update.user().username, backend_update.game_name(), attacker_d6))
             defender_d6.sort(reverse=True)
             gameslog.debug('Defender rolls by {} in game {}: {}'.format(
-                backend_update.user().username, dst_sq.owner.username, defender_d6))
+                dst_sq.owner.username, backend_update.game_name(), defender_d6))
             for i in range(0, len(defender_d6)):
                 if attacker_d6[i] > defender_d6[i]:
                     defending -= 1
@@ -327,6 +333,12 @@ class Game(models.Model):
         """
         Sets the next player's turn
         """
+        if self.get_game_square(1, 3).owner == self.creator:
+            gameslog.info('{} wins!'.format(self.creator.username))
+            self.completed = datetime.now()
+        elif self.get_game_square(5, 3).owner == self.opponent:
+            gameslog.info('{} wins!'.format(self.opponent.username))
+            self.completed = datetime.now()
         for gamesquare in GameSquare.objects.filter(game=self, owner=self.current_turn):
             if gamesquare.tacs < 9:
                 gamesquare.delta_tacs(1)
@@ -372,7 +384,7 @@ class GameSquare(models.Model):
         self.tacs = tacs
         self.save(update_fields=['tacs'])
 
-    def delta_tacs(self,delta):
+    def delta_tacs(self, delta):
         self.tacs += delta
         self.save(update_fields=['tacs'])
 
