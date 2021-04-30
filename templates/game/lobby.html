@@ -8,8 +8,8 @@
     <h1>Lobby</h1>
     <label for="available-games">Available games:</label><br>
     <textarea id="available-games" cols="100" rows="20"></textarea><br>
-    <label for="game-name-input">What game would you like to join or create?</label><br>
-    <input id="game-name-input" type="text" size="100"><br>
+    <label for="game-name-input">What game would you like to join or create? Game names may only contain: a-z, A-Z, 0-9, or an underscore.</label><br>
+    <input id="game-name-input" type="text" size="120"><br>
     {% if messages %}
     <div class="messages" style="color:red;">
         {% for message in messages %}
