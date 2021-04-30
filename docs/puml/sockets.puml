@@ -1,0 +1,53 @@
+@startuml
+
+package "frontend" {
+  frame "ClientSockets" {
+    frame "gameroom.html" {
+      [GameRoomC] -- GameRoomC.connect
+      [GameRoomC] -- GameRoomC.recv
+      [GameRoomC] -- GameRoomC.send
+      [GameBoardC] -- GameBoardC.connect
+      [GameBoardC] -- GameBoardC.recv
+    }
+    frame "lobby.html" {
+      [LobbyC] -- LobbyC.connect
+      [LobbyC] -- LobbyC.recv
+    }
+  }
+}
+
+package "backend" {
+  frame "ServerSockets" {
+    [GameBoardS] -- GameBoardS.connect
+    [GameRoomS] -- GameRoomS.connect
+    [GameRoomS] -- GameRoomS.recv
+    [GameLobbyS] -- GameLobbyS.connect
+  }
+  frame "Routing" {
+    [GameBoardRoute]
+    [GameRoomRoute]
+    [GameLobbyRoute]
+  }
+  frame "SubscriptionGroups" {
+    [LobbyGroup] -- LobbyGroup.subscribe
+    [LobbyGroup] -- LobbyGroup.broadcast
+    [GameGroup] -- GameGroup.subscribe
+    [GameGroup] -- GameGroup.broadcast
+  }
+}
+
+GameRoomC.connect ..> GameRoomRoute : wss://...
+GameBoardC.connect ..> GameBoardRoute : wss://...
+LobbyC.connect ..> GameLobbyRoute : wss://...
+GameBoardRoute ..> GameBoardS.connect
+GameLobbyRoute ..> GameLobbyS.connect
+GameRoomRoute ..> GameRoomS.connect
+GameBoardS.connect ..> GameGroup.subscribe
+GameRoomS.connect ..> GameGroup.subscribe
+GameLobbyS.connect ..> LobbyGroup.subscribe
+GameGroup.broadcast --> GameBoardC.recv : board updates
+GameGroup.broadcast --> GameRoomC.recv : status and gamelogs
+LobbyGroup.broadcast --> LobbyC.recv : lobby_update
+GameRoomC.send --> GameRoomS.recv : game moves
+
+@enduml
