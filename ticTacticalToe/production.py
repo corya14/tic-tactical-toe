@@ -1,4 +1,5 @@
 from ticTacticalToe.settings import *
+import os
 
 # Security
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -12,3 +13,5 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = "DENY"
 DEBUG = False
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
