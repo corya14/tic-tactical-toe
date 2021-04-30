@@ -434,13 +434,14 @@ class GameSquare(models.Model):
         """
         Claims the square for the user
         """
+        from game.interfaces import FrontEndUpdate
         self.owner = user
         self.tacs = tacs
         self.save(update_fields=['owner', 'tacs'])
 
         # add log entry for move
-        self.game.add_log('GameSquare ({0}, {1}) claimed with {2} tacs by {3}'
-                          .format(self.col, self.row, self.tacs, self.owner.username))
+        self.game.add_log('GameSquare {0}{1} claimed with {2} tacs by {3}'
+                          .format(FrontEndUpdate.int_col_to_char(self.col), self.row, self.tacs, self.owner.username))
 
 
 class GameLog(models.Model):
