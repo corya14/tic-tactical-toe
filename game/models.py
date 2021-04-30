@@ -3,6 +3,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models import UniqueConstraint
 import re
+import secrets
 
 import logging
 gameslog = logging.getLogger('games')
@@ -168,6 +169,11 @@ class Game(models.Model):
 
         dst_sq = backend_update.dst()
 
+        if dst_sq.owner == src_sq.owner and backend_update.tacs() + dst_sq.tacs > 9:
+            gameslog.warning(
+                "Invalid move: {} - Destination would have too many tacs".format(backend_update.move()))
+            return False
+
         # Make sure dst square is adjacent
         row_delta = abs(src_sq.row - dst_sq.row)
         col_delta = abs(src_sq.col - dst_sq.col)
@@ -187,9 +193,60 @@ class Game(models.Model):
                 'Invalid move: {}'.format(backend_update.move()))
             return frontend_update
         else:
-            backend_update.src().process(backend_update)
-            self.finalize_turn()
+            if self.process_valid_move(backend_update):
+                self.finalize_turn()
             return self.to_frontend_update()
+
+    def process_valid_move(self, backend_update):
+        src_sq = backend_update.src()
+        dst_sq = backend_update.dst()
+        tacs = backend_update.tacs()
+        if dst_sq.owner == None:
+            gameslog.debug('Processing invading move {}'.format(
+                backend_update.move()))
+            dst_sq.claim(backend_update.user(), backend_update.tacs())
+            return True
+        elif src_sq == dst_sq:
+            src_sq.set_tacs(max(9, src_sq.tacs() + 2))
+        elif dst_sq.owner == backend_update.user():
+            gameslog.debug('Processing internal move {}'.format(
+                backend_update.move()))
+            src_sq.set_tacs(src_sq.tacs - tacs)
+            dst_sq.set_tacs(dst_sq.tacs + tacs)
+            return True
+        else:
+            gameslog.debug('Processing conflict move {}'.format(
+                backend_update.move()))
+            attacking = tacs
+            defending = dst_sq.tacs
+            gameslog.debug('{} attacking {} in game {}, {} vs {} tacs'.format(
+                src_sq.owner.username, dst_sq.owner.username, backend_update.game_name(), attacking, defending))
+            attacker_d6 = [x for x in range(0, min(3, attacking))]
+            defender_d6 = [x for x in range(0, min(2, defending))]
+            for i in range(0, len(attacker_d6)):
+                attacker_d6[i] = secrets.randbelow(6) + 1
+            for i in range(0, len(defender_d6)):
+                defender_d6[i] = secrets.randbelow(6) + 1
+            attacker_d6.sort(reverse=True)
+            gameslog.debug('Attacker rolls by {} in game {}: {}'.format(
+                backend_update.user().username, backend_update.game_name(), attacker_d6))
+            defender_d6.sort(reverse=True)
+            gameslog.debug('Defender rolls by {} in game {}: {}'.format(
+                backend_update.user().username, backend_update.game_name(), defender_d6))
+            for i in range(0, len(defender_d6)):
+                if attacker_d6[i] > defender_d6[i]:
+                    defending -= 1
+                    if defending == 0:
+                        break
+                else:
+                    attacking -= 1
+            if defending == 0:
+                dst_sq.claim(backend_update.user(), attacking)
+                return True  # end turn
+            else:
+                src_sq.set_tacs(attacking)
+                dst_sq.set_tacs(defending)
+                return False
 
     def to_frontend_update(self):
         from game.interfaces import FrontEndUpdate
@@ -263,7 +320,8 @@ class Game(models.Model):
         Sets the next player's turn
         """
         for gamesquare in GameSquare.objects.filter(game=self, owner=self.current_turn):
-            gamesquare.set_tacs(gamesquare.tacs + 1)
+            if gamesquare.tacs < 9:
+                gamesquare.set_tacs(gamesquare.tacs + 1)
         self.current_turn = self.creator if self.current_turn != self.creator else self.opponent
         self.save()
 
@@ -313,15 +371,6 @@ class GameSquare(models.Model):
         except GameSquare.DoesNotExist:
             # TODO: Handle exception for gamesquare
             return None
-
-    def process(self, backend_update):
-        """Move tacs to dst_sq
-        """
-        dst_sq = backend_update.dst()
-        tacs = backend_update.tacs()
-        self.set_tacs(self.tacs - tacs)
-        dst_sq.claim(backend_update.user(), backend_update.tacs())
-        return
 
     def claim(self, user, tacs):
         """
