@@ -12,6 +12,7 @@ cols['c'] = 3
 cols['d'] = 4
 cols['e'] = 5
 
+
 class BackEndUpdate():
     """Encapculates an update to the back end
     """
@@ -37,7 +38,7 @@ class BackEndUpdate():
         print('src str: {}'.format(src_str))
         col = cols[src_str[0]]
         row = src_str[1]
-        return game.get_game_square(row,col)
+        return game.get_game_square(row, col)
 
     def __str__(self):
         return "BackEndUpdate{{USER[{}]GAME[{}]MOVE[{}]}}".format(self._user, self._game_name, self._move)
@@ -191,5 +192,4 @@ class GameModelInterface():
         """ Return list of games that need another player """
         avail_games = Game.get_available_games()
         avail_games_list = [x.game_name for x in avail_games]
-        print(avail_games_list)
         return avail_games_list

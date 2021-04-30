@@ -6,6 +6,7 @@ import re
 
 import logging
 gameslog = logging.getLogger('games')
+authlog = logging.getLogger('auth')
 
 
 # Move verification regex
@@ -42,19 +43,29 @@ class Game(models.Model):
         return Game.objects.filter(game_name=name).count() > 0
 
     @staticmethod
-    def user_may_join_or_play_game(username, game_name):
+    def user_may_join_or_play_game(user, game_name):
         if not Game.exists(game_name):
             # Game DNE, user may create
+            authlog.info(
+                'User {} may join game {} - Game is new'.format(user.username, game_name))
             return True
         else:
             game = Game.objects.filter(game_name=game_name).get()
             if game.opponent is None:
+                authlog.info(
+                    'User {} may join game {} - Game has no opponent yet'.format(user.username, game_name))
                 return True
-            elif game.opponent.username == username:
+            elif game.opponent == user:
+                authlog.info(
+                    'User {} may join game {} - User is game opponent'.format(user.username, game_name))
                 return True
-            elif game.creator.username == username:
+            elif game.creator == user:
+                authlog.info(
+                    'User {} may join game {} - User is game creator'.format(user.username, game_name))
                 return True
             else:
+                authlog.info('User {} may not join game {}'.format(
+                    user.username, game_name))
                 return False
 
     @staticmethod
@@ -121,7 +132,7 @@ class Game(models.Model):
     def is_valid_move(self, backend_update):
         if not VERIFY_REGEX.match(backend_update.move()):
             gameslog.warning(
-                'Invalid move: {} - Not in whitelist'.format(backend_update.move()))
+                'Invalid move: {} - Did not pass regex'.format(backend_update.move()))
             return False
 
         # check if user owns source square
