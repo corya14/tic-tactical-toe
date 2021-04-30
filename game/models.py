@@ -135,7 +135,7 @@ class Game(models.Model):
                 'Invalid move: {} - Did not pass regex'.format(backend_update.move()))
             return False
 
-        src_sq = backend_update.get_src_square()
+        src_sq = backend_update.src()
 
         # check if user owns source square
         if not src_sq.owner == backend_update.user():
@@ -145,16 +145,18 @@ class Game(models.Model):
 
         # Make sure source square has tacs
         if not src_sq.tacs > 0:
-            gameslog.warning("Invalid move: {} - Source has no tacs".format(backend_update.move()))
+            gameslog.warning(
+                "Invalid move: {} - Source has no tacs".format(backend_update.move()))
             return False
 
-        dst_sq = backend_update.get_dst_square()
+        dst_sq = backend_update.dst()
 
         # Make sure dst square is adjacent
         row_delta = abs(src_sq.row - dst_sq.row)
         col_delta = abs(src_sq.col - dst_sq.col)
         if row_delta + col_delta > 1:
-            gameslog.warning("Invalid move: {} - Dest not adjacent to source".format(backend_update.move()))
+            gameslog.warning(
+                "Invalid move: {} - Dest not adjacent to source".format(backend_update.move()))
             return False
 
         return True
@@ -163,23 +165,28 @@ class Game(models.Model):
         if not self.is_valid_move(backend_update):
             gameslog.debug("User {} attempted invalid move {} in game {}".format(
                 backend_update.user().username, backend_update.move(), backend_update.game_name()))
-            front_end_update=self.to_frontend_update()
-        pass
+            frontend_update = self.to_frontend_update()
+            frontend_update.set_status(
+                'Invalid move: {}'.format(backend_update.move()))
+            return frontend_update
+        else:
+            backend_update.src().process(backend_update)
+            return self.to_frontend_update()
 
     def to_frontend_update(self):
         from game.interfaces import FrontEndUpdate
-        frontend_update=FrontEndUpdate()
+        frontend_update = FrontEndUpdate()
         for row in range(1, 6):
             for col in range(1, 6):
-                char_col=FrontEndUpdate.int_col_to_char(col)
-                gamesquare=GameSquare.objects.filter(
+                char_col = FrontEndUpdate.int_col_to_char(col)
+                gamesquare = GameSquare.objects.filter(
                     game=self, row=row, col=col).get()
                 if gamesquare.owner == None:
-                    color='white'
+                    color = 'white'
                 elif gamesquare.owner == self.creator:
-                    color='cyan'
+                    color = 'cyan'
                 else:
-                    color='red'
+                    color = 'red'
                 frontend_update.set_square(
                     row=row, col=char_col, color=color, value=gamesquare.tacs)
         return frontend_update
@@ -188,7 +195,7 @@ class Game(models.Model):
         """
         Adds a text log associated with this game.
         """
-        entry=GameLog(game=self, text=text, player=user).save()
+        entry = GameLog(game=self, text=text, player=user).save()
         return entry
 
     def get_all_game_squares(self):
@@ -211,7 +218,7 @@ class Game(models.Model):
         Retrieves the GameSquare based on it's (x,y) or (row, col)
         """
         try:
-            square=GameSquare.objects.get(row=coords[1],
+            square = GameSquare.objects.get(row=coords[1],
                                             col=coords[0],
                                             game=self)
             return square
@@ -229,36 +236,36 @@ class Game(models.Model):
         """
         Sets the next player's turn
         """
-        self.current_turn=self.creator if self.current_turn != self.creator else self.opponent
+        self.current_turn = self.creator if self.current_turn != self.creator else self.opponent
         self.save()
 
     def mark_complete(self, winner):
         """
         Sets a game to completed status and records the winner
         """
-        self.winner=winner
-        self.completed=datetime.now()
+        self.winner = winner
+        self.completed = datetime.now()
         self.save()
 
 
 class GameSquare(models.Model):
 
     class Meta:
-        constraints=[
+        constraints = [
             models.UniqueConstraint(name='uniqueness', fields=[
                                     'game', 'row', 'col'])
         ]
 
-    game=models.ForeignKey(Game, on_delete=models.CASCADE)
-    owner=models.ForeignKey(
+    game = models.ForeignKey(Game, on_delete=models.CASCADE)
+    owner = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
-    tacs=models.IntegerField(default=0)
-    row=models.IntegerField()
-    col=models.IntegerField()
+    tacs = models.IntegerField(default=0)
+    row = models.IntegerField()
+    col = models.IntegerField()
 
     # dates
-    created=models.DateTimeField(auto_now_add=True)
-    modified=models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
         return '{0} - ({1}, {2})[{3}]'.format(self.game, self.col, self.row, self.tacs)
@@ -268,7 +275,7 @@ class GameSquare(models.Model):
         return GameSquare.objects.filter(row=row, col=col, game=game).get()
 
     def set_tacs(self, tacs):
-        self.tacs=tacs
+        self.tacs = tacs
         self.save(update_fields=['tacs'])
 
     @ staticmethod
@@ -279,12 +286,21 @@ class GameSquare(models.Model):
             # TODO: Handle exception for gamesquare
             return None
 
+    def process(self, backend_update):
+        """Move tacs to dst_sq
+        """
+        dst_sq = backend_update.dst()
+        tacs = backend_update.tacs()
+        self.set_tacs(self.tacs - tacs)
+        dst_sq.claim(backend_update.user(), backend_update.tacs())
+        return
+
     def claim(self, user, tacs):
         """
         Claims the square for the user
         """
-        self.owner=user
-        self.tacs=tacs
+        self.owner = user
+        self.tacs = tacs
         self.save(update_fields=['owner', 'tacs'])
 
         # add log entry for move
@@ -293,13 +309,13 @@ class GameSquare(models.Model):
 
 
 class GameLog(models.Model):
-    game=models.ForeignKey(Game, on_delete=models.CASCADE)
-    text=models.CharField(max_length=300)
-    player=models.ForeignKey(
+    game = models.ForeignKey(Game, on_delete=models.CASCADE)
+    text = models.CharField(max_length=300)
+    player = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
 
-    created=models.DateTimeField(auto_now_add=True)
-    modified=models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
         return 'Game #{0} Log'.format(self.game.id)

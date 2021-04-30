@@ -21,6 +21,9 @@ class BackEndUpdate():
         self._user = user
         self._game_name = game_name
         self._move = move
+        self._src_sq = self._set_src_square()
+        self._dst_sq = self._set_dst_square()
+        self._num_tacs = self._set_num_tacs()
 
     def user(self):
         return self._user
@@ -31,7 +34,16 @@ class BackEndUpdate():
     def move(self):
         return self._move
 
-    def get_src_square(self):
+    def src(self):
+        return self._src_sq
+
+    def dst(self):
+        return self._dst_sq
+
+    def tacs(self):
+        return self._num_tacs
+
+    def _set_src_square(self):
         game = Game.objects.filter(game_name=self._game_name).get()
         # (1)(a1,a1)
         #     ^^
@@ -40,7 +52,7 @@ class BackEndUpdate():
         row = src_str[1]
         return game.get_game_square(row, col)
 
-    def get_dst_square(self):
+    def _set_dst_square(self):
         game = Game.objects.filter(game_name=self._game_name).get()
         # (1)(a1,a1)
         #        ^^
@@ -48,6 +60,9 @@ class BackEndUpdate():
         col = cols[dst_str[0]]
         row = dst_str[1]
         return game.get_game_square(row, col)
+
+    def _set_num_tacs(self):
+        return int(self._move.split('|')[0].replace('(', '').replace(')', ''))
 
     def __str__(self):
         return "BackEndUpdate{{USER[{}]GAME[{}]MOVE[{}]}}".format(self._user, self._game_name, self._move)
@@ -100,6 +115,9 @@ class FrontEndUpdate():
             return 'e'
         else:
             return None
+
+    def set_status(self, status):
+        self.status = status
 
     def init_square(self, row, col):
         id = FrontEndUpdate.get_square_id(row, col)
@@ -172,29 +190,8 @@ class GameModelInterface():
             # User is part of game and game is ready to play
             gameslog.info('Received update for game {}'.format(
                 backend_update.game_name()))
-            game.update(backend_update)
-        """
-        Accept move_str from user for given game (str name of game)
-        Should check:
-           Is the user auth'd to this game?
-           Is it the users turn?
-           Is the move valid?
-        Then:
-           Update the state of the game
-           Change active turn
-        Finally:
-           yield FrontEndUpdate with applicable status
-        """
-        print(str(backend_update))
-        # TODO: replace me with proper front end update
-        update = FrontEndUpdate()
-        update.set_square(1, 'b', 'red', 1)
-        update.set_square(1, 'd', 'red', 3)
-        update.set_square(1, 'd', 'red', 3)
-        update.set_square(4, 'b', 'cyan', 1)
-        update.set_square(4, 'c', 'cyan', 2)
-        update.set_square(4, 'd', 'cyan', 3)
-        return update
+            frontend_update = game.update(backend_update)
+            return frontend_update
 
     @staticmethod
     def get_lobby_games():
