@@ -33,11 +33,20 @@ class BackEndUpdate():
 
     def get_src_square(self):
         game = Game.objects.filter(game_name=self._game_name).get()
-        print(self._move)
+        # (1)(a1,a1)
+        #     ^^
         src_str = self._move.split('|')[1][1:3]
-        print('src str: {}'.format(src_str))
         col = cols[src_str[0]]
         row = src_str[1]
+        return game.get_game_square(row, col)
+
+    def get_dst_square(self):
+        game = Game.objects.filter(game_name=self._game_name).get()
+        # (1)(a1,a1)
+        #        ^^
+        dst_str = self._move.split('|')[1][4:6]
+        col = cols[dst_str[0]]
+        row = dst_str[1]
         return game.get_game_square(row, col)
 
     def __str__(self):

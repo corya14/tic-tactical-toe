@@ -135,14 +135,27 @@ class Game(models.Model):
                 'Invalid move: {} - Did not pass regex'.format(backend_update.move()))
             return False
 
+        src_sq = backend_update.get_src_square()
+
         # check if user owns source square
-        if not backend_update.get_src_square().owner == backend_update.user():
+        if not src_sq.owner == backend_update.user():
             gameslog.warning(
                 "Invalid move: {} - User doesn't own src square".format(backend_update.move()))
+            return False
 
         # Make sure source square has tacs
-        if not backend_update.get_src_square().tacs > 0:
-            gameslog.warning("Invalid move: {} - Source has no tacs".format(backend_update.move())
+        if not src_sq.tacs > 0:
+            gameslog.warning("Invalid move: {} - Source has no tacs".format(backend_update.move()))
+            return False
+
+        dst_sq = backend_update.get_dst_square()
+
+        # Make sure dst square is adjacent
+        row_delta = abs(src_sq.row - dst_sq.row)
+        col_delta = abs(src_sq.col - dst_sq.col)
+        if row_delta + col_delta > 1:
+            gameslog.warning("Invalid move: {} - Dest not adjacent to source".format(backend_update.move()))
+            return False
 
         return True
 
