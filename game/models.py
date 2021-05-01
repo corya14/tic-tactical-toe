@@ -93,13 +93,13 @@ class Game(models.Model):
     @staticmethod
     def user_join_game(user, game_name):
         game = Game.objects.filter(game_name=game_name).get()
-        if game.opponent is None:
+        if game.creator == user:
+            authlog.info('Creator {} rejoining game {}'.format(
+                user.username, game_name))
+        elif game.opponent is None:
             game.opponent = user
             game.get_game_square(1, 3).claim(user, 2)
             game.save(update_fields=['opponent'])
-        elif game.creator.username == user.username:
-            authlog.info('Creator {} rejoining game {}'.format(
-                user.username, game_name))
         else:
             pass  # creator may be rejoining
 
