@@ -3,6 +3,8 @@
 {% block title %}Game Room{% endblock %}
 
 {% block content %}
+{% if user.is_authenticated %}
+  <h1>{{ user.username }}'s Game Room</h1>
 
    <div id="player2-label" style="display:inline;">Player 2: </div><div id="player2" style="display:inline;"></div><br>
    <div id="gameboard"></div>
@@ -75,4 +77,5 @@
    <script src="{% static 'js/gameroom.js' %}" type="text/javascript"></script>
    <script src="{% static 'js/gameboard.js' %}" type="text/babel"></script>
 
+   {% endif %}
 {% endblock %}
