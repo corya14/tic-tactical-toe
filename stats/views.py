@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.db import models
 from game.models import Game
@@ -33,3 +33,5 @@ def statspage(request, username):
             'wins': wins,
             'losses': losses
         })
+    else:
+        return redirect('home')

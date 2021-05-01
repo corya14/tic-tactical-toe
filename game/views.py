@@ -16,6 +16,8 @@ def lobby(request):
         return render(request, 'game/lobby.html', {
             'requesting_user': request.user.username
         })
+    else:
+        return redirect('home')
 
 
 def gameroom(request, game_name):
@@ -44,3 +46,5 @@ def gameroom(request, game_name):
                 request.user.username))
             messages.error(request, "Invalid game name. Please try again.")
             return redirect('lobby')
+    else:
+        return redirect('home')
