@@ -277,7 +277,9 @@ class Game(models.Model):
                 dst_sq.owner.username, defender_d6), dst_sq.owner)
             gameslog.debug('Defender rolls by {} in game {}: {}'.format(
                 dst_sq.owner.username, backend_update.game_name(), defender_d6))
-            for i in range(0, len(defender_d6)):
+
+            num_dice = min(len(defender_d6),len(attacker_d6))
+            for i in range(0, num_dice):
                 if attacker_d6[i] > defender_d6[i]:
                     defending -= 1
                     def_loss += 1
