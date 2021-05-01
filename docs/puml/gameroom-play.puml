@@ -1,0 +1,36 @@
+@startuml
+
+package "backend" {
+  frame "Models" {
+    [GameInstance]
+  }
+  frame "Authentication" {
+    [user.is_authenticated]
+  }
+  frame "Consumers" {
+    [UserGameRoomSocketConsumer]
+  }
+  frame "Channels" {
+    [GameInstanceChannel]
+  }
+}
+
+package "frontend" {
+  actor user
+  frame "client" {
+    entity gameRoomSocket
+    entity gameBoardSocket
+    [GameRoomClientPage] <..> gameRoomSocket : 2,8
+    [GameRoomClientPage] <.. gameBoardSocket : 8
+  }
+}
+
+user ..> GameRoomClientPage : 1
+gameRoomSocket ..> UserGameRoomSocketConsumer : 3
+UserGameRoomSocketConsumer ..> user.is_authenticated : 4
+UserGameRoomSocketConsumer <..> GameInstance : 5
+UserGameRoomSocketConsumer ..> GameInstanceChannel : 6
+GameInstanceChannel ..> gameRoomSocket : 7
+GameInstanceChannel ..> gameBoardSocket : 7
+
+@enduml
