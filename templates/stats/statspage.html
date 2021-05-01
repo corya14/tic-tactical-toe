@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block title %}Stats Page{% endblock %}
+
+{% block content %}
+  {% if user.is_authenticated %}
+
+  <h1>{{ username }}'s Stats</h1>
+
+  WINS: {{ wins }}<br>
+  LOSSES OR INCOMPLETE: {{ losses }}
+
+  {% endif %}
+{% endblock %}
