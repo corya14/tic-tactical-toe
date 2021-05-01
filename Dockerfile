@@ -15,6 +15,7 @@ COPY localhost-TEST.key /app
 COPY ticTacticalToe /app/ticTacticalToe
 COPY accounts /app/accounts
 COPY game /app/game
+COPY stats /app/stats
 COPY static /app/static
 COPY templates /app/templates
 COPY manage.py /app
