@@ -15,3 +15,4 @@ X_FRAME_OPTIONS = "DENY"
 DEBUG = False
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+SECRET_KEY = os.environ['SECRET_KEY']

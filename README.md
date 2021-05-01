@@ -41,9 +41,24 @@ openssl req -x509 -out localhost-TEST.crt -keyout localhost-TEST.key \
 ```
 
 # Test Secure Deployment
+## Build the Docker
 This requires the files `localhost-TEST.crt` and `localhost-TEST.key` to exist locally.
+
+### Build With Django Generated Secret Key
+This requires Django to be installed outside of the docker. If you don't want to do that, see the next option.
 ```sh
-docker build --tag ttt:latest .
+docker build --build-arg DJANGO_SECRET_KEY=`python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'` --tag ttt:latest .
+```
+
+### Build With Your Own Secret Key (Less Secure)
+Insert your own key below in place of YOURSECRETKEY. You may use the debug secret key for testing purposes: `django-insecure-9!i$^80-ivi7kml_a2t%_7qve&tk8kbsy=l+)1y!1t42-i^f%i`
+
+```sh
+docker build --build-arg DJANGO_SECRET_KEY=YOURSECRETKEY --tag ttt:latest .
+```
+
+### Running the Docker
+```sh
 docker run -it -d --name ttt -p 4443:443 ttt
 ```
 

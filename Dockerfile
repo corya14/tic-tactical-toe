@@ -24,6 +24,8 @@ RUN mkdir -p /app/logs
 WORKDIR /app
 
 ENV DJANGO_SETTINGS_MODULE=ticTacticalToe.production
+ARG DJANGO_SECRET_KEY
+ENV SECRET_KEY=$DJANGO_SECRET_KEY
 
 RUN pip3 install -r requirements.txt
 RUN python3 manage.py makemigrations
