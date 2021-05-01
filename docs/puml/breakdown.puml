@@ -12,6 +12,9 @@ object Game
 object Game.urls
 object Game.models
 object Game.views
+object Stats
+object Stats.urls
+object Stats.views
 object models.User
 object models.Game
 object models.GameSquare
@@ -19,12 +22,14 @@ object models.GameLog
 
 ticTacticalToe <|-- ticTacticalToe.urls
 ticTacticalToe <|-- ticTacticalToe.views
-ticTacticalToe.views <|-- Accounts.views
-ticTacticalToe.views <|-- Game.views
+ticTacticalToe.urls <|-- Accounts.urls
+ticTacticalToe.urls <|-- Game.urls
+ticTacticalToe.urls <|-- Stats.urls
 ticTacticalToe <|-- ticTacticalToe.consumers
 ticTacticalToe <|-- ticTacticalToe.routing
 ticTacticalToe <|-- Accounts
 ticTacticalToe <|-- Game
+ticTacticalToe <|-- Stats
 Accounts <|-- Accounts.urls
 Accounts <|-- Accounts.views
 Accounts <|-- Accounts.models
@@ -32,6 +37,8 @@ Accounts.models <|-- models.User
 Game <|-- Game.urls
 Game <|-- Game.views
 Game <|-- Game.models
+Stats <|-- Stats.urls
+Stats <|-- Stats.views
 Game.models <|-- models.Game
 Game.models <|-- models.GameSquare
 Game.models <|-- models.GameLog
