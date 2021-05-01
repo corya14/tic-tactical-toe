@@ -184,18 +184,17 @@ class Game(models.Model):
                 "Invalid move: {} - User doesn't own src square".format(backend_update.move()))
             return False
 
-        # Make sure source square has tacs
-        if not src_sq.tacs > 0:
-            gameslog.warning(
-                "Invalid move: {} - Source has no tacs".format(backend_update.move()))
-            return False
-
         dst_sq = backend_update.dst()
 
         if src_sq == dst_sq:
             gameslog.debug("Ignoring tacs quantity constraints for IDLE move {} by user {}".format(
                 backend_update.move(), backend_update.user().username))
         else:
+            # Make sure source square has tacs
+            if not src_sq.tacs > 0:
+                gameslog.warning(
+                    "Invalid move: {} - Source has no tacs".format(backend_update.move()))
+                return False
             # Make sure player isn't trying to move too many tacs
             if src_sq.tacs < backend_update.tacs():
                 gameslog.warning(
@@ -278,7 +277,7 @@ class Game(models.Model):
             gameslog.debug('Defender rolls by {} in game {}: {}'.format(
                 dst_sq.owner.username, backend_update.game_name(), defender_d6))
 
-            num_dice = min(len(defender_d6),len(attacker_d6))
+            num_dice = min(len(defender_d6), len(attacker_d6))
             for i in range(0, num_dice):
                 if attacker_d6[i] > defender_d6[i]:
                     defending -= 1
