@@ -1,0 +1,55 @@
+@startuml
+
+package "backend" {
+  frame "Urls" {
+    [url]
+  }
+  frame "Views" {
+    [gameroom.html]
+  }
+  frame "Routing" {
+    [WebSocketToConsumer]
+  }
+  frame "Models" {
+    [GameInstance]
+  }
+  frame "Authentication" {
+    [user.is_authenticated]
+  }
+  frame "Consumers" {
+    [UserGameBoardSocketConsumer]
+    [UserGameRoomSocketConsumer]
+  }
+  frame "Channels" {
+    [GameInstanceChannel]
+  }
+}
+
+package "frontend" {
+  actor user
+  frame "client" {
+    entity gameRoomSocket
+    entity gameBoardSocket
+    [GameRoomClientPage] <..> gameRoomSocket : 5,13
+    [GameRoomClientPage] <..> gameBoardSocket : 5,13
+  }
+}
+
+user ..> url : 1
+url ..> user.is_authenticated : 2
+url ..> gameroom.html : 3
+gameroom.html ..> GameRoomClientPage : 4
+gameRoomSocket ..> WebSocketToConsumer : 6
+gameBoardSocket ..> WebSocketToConsumer : 6
+WebSocketToConsumer ..> UserGameBoardSocketConsumer : 7
+WebSocketToConsumer ..> UserGameRoomSocketConsumer : 7
+UserGameBoardSocketConsumer ..> user.is_authenticated : 8
+UserGameRoomSocketConsumer ..> user.is_authenticated : 8
+UserGameBoardSocketConsumer ..> GameInstanceChannel : 9
+UserGameRoomSocketConsumer ..> GameInstanceChannel : 9
+UserGameBoardSocketConsumer <..> GameInstance : 10
+UserGameBoardSocketConsumer ..> GameInstanceChannel : 11
+GameInstanceChannel ..> gameBoardSocket : 12
+GameInstanceChannel ..> gameRoomSocket : 12
+
+@enduml

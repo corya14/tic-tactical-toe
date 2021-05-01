@@ -28,7 +28,7 @@ package "frontend" {
   actor user
   frame "client" {
     entity lobbySocket
-    [LobbyClientPage] -- lobbySocket
+    [LobbyClientPage] -- lobbySocket : 5
   }
 }
 
@@ -36,12 +36,12 @@ user --> url : 1
 url --> user.is_authenticated : 2
 url --> lobby.html : 3
 lobby.html --> LobbyClientPage : 4
-lobbySocket --> WebSocketToConsumer : 5
-WebSocketToConsumer --> UserGameLobbyConsumer : 6
-UserGameLobbyConsumer --> user.is_authenticated : 7
-UserGameLobbyConsumer --> LobbyChannel : 8,10
-UserGameLobbyConsumer -- Games : 9
-LobbyChannel --> lobbySocket : 11
+lobbySocket --> WebSocketToConsumer : 6
+WebSocketToConsumer --> UserGameLobbyConsumer : 7
+UserGameLobbyConsumer --> user.is_authenticated : 8
+UserGameLobbyConsumer --> LobbyChannel : 9,11
+UserGameLobbyConsumer -- Games : 10
+LobbyChannel --> lobbySocket : 12
 
 
 @enduml
