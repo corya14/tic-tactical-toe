@@ -1,0 +1,47 @@
+@startuml
+
+package "backend" {
+  frame "Urls" {
+    [url]
+  }
+  frame "Views" {
+    [lobby.html]
+  }
+  frame "Routing" {
+    [WebSocketToConsumer]
+  }
+  frame "Models" {
+    [Games]
+  }
+  frame "Authentication" {
+    [user.is_authenticated]
+  }
+  frame "Consumers" {
+    [UserGameLobbyConsumer]
+  }
+  frame "Channels" {
+    [LobbyChannel]
+  }
+}
+
+package "frontend" {
+  actor user
+  frame "client" {
+    entity lobbySocket
+    [LobbyClientPage] -- lobbySocket
+  }
+}
+
+user --> url : 1
+url --> user.is_authenticated : 2
+url --> lobby.html : 3
+lobby.html --> LobbyClientPage : 4
+lobbySocket --> WebSocketToConsumer : 5
+WebSocketToConsumer --> UserGameLobbyConsumer : 6
+UserGameLobbyConsumer --> user.is_authenticated : 7
+UserGameLobbyConsumer --> LobbyChannel : 8,10
+UserGameLobbyConsumer -- Games : 9
+LobbyChannel --> lobbySocket : 11
+
+
+@enduml
