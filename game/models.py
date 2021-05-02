@@ -47,6 +47,7 @@ class Game(models.Model):
     @staticmethod
     def user_may_join_or_play_game(user, game_name):
         # Make sure user doesn't have a bunch of other unfinished games
+
         unfinished = Game.objects.filter(models.Q(completed=None) & (
             models.Q(creator=user) | models.Q(opponent=user)))
         if len(unfinished) >= 5:
@@ -65,10 +66,15 @@ class Game(models.Model):
                 return False
         else:  # game exists
             game = Game.objects.filter(game_name=game_name).get()
+            time_since_created = datetime.now() - game.created
             if game.is_complete():
                 authlog.info(
                     'User {} may view game {} - Game completed'.format(user.username, game_name))
                 return True
+            elif time_since_created.days > 0:
+                authlog.warning(
+                    'User {} may not rejoin game {} - Game is >24 hours old'.format(user.username, game_name))
+                return False
             elif game.opponent is None:
                 if len(unfinished) < 5:
                     authlog.info(
