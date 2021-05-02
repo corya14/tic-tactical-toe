@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.db.models import UniqueConstraint
 import re
 import secrets
-from datetime import datetime
+from datetime import datetime, timezone
 
 import logging
 gameslog = logging.getLogger('games')
@@ -66,7 +66,7 @@ class Game(models.Model):
                 return False
         else:  # game exists
             game = Game.objects.filter(game_name=game_name).get()
-            time_since_created = datetime.now() - game.created
+            time_since_created = datetime.now(timezone.utc) - game.created
             if game.is_complete():
                 authlog.info(
                     'User {} may view game {} - Game completed'.format(user.username, game_name))
@@ -392,7 +392,7 @@ class Game(models.Model):
         Sets a game to completed status and records the winner
         """
         self.winner = winner
-        self.completed = datetime.now()
+        self.completed = datetime.now(timezone.utc)
         self.add_log('{} wins!'.format(winner.username), winner)
         self.save()
 

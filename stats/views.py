@@ -25,7 +25,8 @@ def statspage(request, username):
                     losses += 1
             else:
                 # Count any unfinished game where it's user's turn as loss
-                if game.current_turn == user:
+                # Don't count game if no one ever joined
+                if game.current_turn == user and game.opponent != None:
                     losses += 1
 
         return render(request, 'stats/statspage.html', {
