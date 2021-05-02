@@ -66,15 +66,10 @@ class Game(models.Model):
                 return False
         else:  # game exists
             game = Game.objects.filter(game_name=game_name).get()
-            time_since_created = datetime.now(timezone.utc) - game.created
             if game.is_complete():
                 authlog.info(
                     'User {} may view game {} - Game completed'.format(user.username, game_name))
                 return True
-            elif time_since_created.days > 0:
-                authlog.warning(
-                    'User {} may not rejoin game {} - Game is >24 hours old'.format(user.username, game_name))
-                return False
             elif game.opponent is None:
                 if len(unfinished) < 5:
                     authlog.info(
@@ -170,6 +165,12 @@ class Game(models.Model):
         if self.completed is not None:
             gameslog.warning(
                 "Invalid move: {} - Game {} is completed".format(backend_update.move(), backend_update.game_name()))
+            return False
+
+        time_since_created = datetime.now(timezone.utc) - self.created
+        if time_since_created.days > 0:
+            authlog.warning(
+                'Invalid move: {} - Game {} is > 24 hours old'.format(user.username, backend_update.game_name()))
             return False
 
         if not VERIFY_REGEX.match(backend_update.move()):
